@@ -2,860 +2,388 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0e1a">
     <meta name="description" content="App Turística Bolivia · GPS - Explora Copacabana con GPS en tiempo real">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Copa-Tur">
-    
-    <title>GC Turístismo bolivia</title>
-    
-    <!-- Favicon y PWA -->
-    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- CSS -->
+
+    <title>GC Turismo Bolivia</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+        :root {
+            --bg-deep: #0a0e1a;
+            --bg-mid: #0f172a;
+            --bg-violet: #1a1040;
+            --accent: #a855f7;
+            --accent-dark: #7c3aed;
+            --accent-soft: rgba(168,85,247,0.15);
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-dim: rgba(255,255,255,0.66);
+            --text-faint: rgba(255,255,255,0.44);
+            --card-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --radius-lg: 20px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
         }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        html { -webkit-text-size-adjust: 100%; }
+
         body {
             background: linear-gradient(160deg, #0a0e1a 0%, #0f172a 25%, #1a1040 50%, #0f172a 75%, #0a0e1a 100%);
-            background-attachment: fixed;
-            color: white;
-            min-height: 100vh;
-            position: relative;
-            overscroll-behavior: none;
+            background-attachment: fixed; color: white; min-height: 100vh; position: relative; overscroll-behavior: none;
+            -webkit-font-smoothing: antialiased;
         }
-        
+
         body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(ellipse at 20% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
-                        radial-gradient(ellipse at 80% 80%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
-                        radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 0;
+            content: ''; position: fixed; inset: 0;
+            background: radial-gradient(ellipse at 20% 20%, rgba(168,85,247,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(56,189,248,0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 50%, rgba(16,185,129,0.04) 0%, transparent 60%);
+            pointer-events: none; z-index: 0;
         }
 
-        .login-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
+        /* Relleno de la barra de estado: mismo color que el fondo de la app */
+        .status-bar-fill {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top);
+            background: var(--bg-deep); z-index: 10001; pointer-events: none;
         }
-        
+
+        .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom)); position: relative; z-index: 1; }
+
         .login-card {
-            width: 100%;
-            max-width: 420px;
-            background: rgba(15, 23, 42, 0.85);
-            border-radius: 24px;
-            padding: 32px 24px;
-            border: 1px solid rgba(168, 85, 247, 0.25);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(168, 85, 247, 0.08);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            position: relative;
-            overflow: hidden;
+            width: 100%; max-width: 420px; background: rgba(15,23,42,0.85); border-radius: 26px; padding: 36px 26px;
+            border: 1px solid rgba(168,85,247,0.25); box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 40px rgba(168,85,247,0.08);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); position: relative; overflow: hidden;
         }
-        
+
         .login-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, transparent 70%);
-            pointer-events: none;
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%); pointer-events: none;
         }
-        
-        .login-header {
-            text-align: center;
-            margin-bottom: 28px;
-            position: relative;
-            z-index: 1;
-        }
-        
+
+        .login-header { text-align: center; margin-bottom: 30px; position: relative; z-index: 1; }
+
         .login-header .logo {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #a855f7, #7c3aed);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            margin: 0 auto 16px;
-            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.5);
+            width: 64px; height: 64px; background: linear-gradient(135deg, #a855f7, #7c3aed); border-radius: 18px;
+            display: flex; align-items: center; justify-content: center; font-size: 28px; color: white;
+            margin: 0 auto 18px; box-shadow: 0 8px 25px rgba(168,85,247,0.5);
         }
-        
-        .login-header h2 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-        
-        .login-header p {
-            font-size: 14px;
-            opacity: 0.7;
-        }
-        
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        
-        .form-group label {
-            font-size: 13px;
-            font-weight: 600;
-            opacity: 0.9;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .form-group label i {
-            color: #a855f7;
-            font-size: 14px;
-        }
-        
+
+        .login-header h2 { font-size: 25px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px; }
+        .login-header p { font-size: 14px; opacity: 0.65; }
+
+        .login-form { display: flex; flex-direction: column; gap: 18px; position: relative; z-index: 1; }
+
+        .form-group { display: flex; flex-direction: column; gap: 7px; }
+        .form-group label { font-size: 12.5px; font-weight: 600; opacity: 0.85; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .form-group label i { color: #a855f7; font-size: 13px; }
+
         .form-input {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 12px 14px;
-            color: white;
-            font-size: 15px;
-            outline: none;
-            transition: 0.2s;
-            width: 100%;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm);
+            padding: 13px 14px; color: white; font-size: 15px; outline: none; transition: 0.2s; width: 100%;
         }
-        
-        .form-input:focus {
-            border-color: #a855f7;
-            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
-            background: rgba(255, 255, 255, 0.07);
-        }
-        
-        .form-input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-        
-        .phone-group {
-            display: flex;
-            gap: 8px;
-        }
-        
+
+        .form-input:focus { border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,0.12); background: rgba(255,255,255,0.07); }
+        .form-input::placeholder { color: rgba(255,255,255,0.3); }
+
+        .phone-group { display: flex; gap: 8px; }
         .phone-prefix {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 12px 10px;
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            min-width: 70px;
-            text-align: center;
-            white-space: nowrap;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm);
+            padding: 13px 10px; color: white; font-size: 14px; font-weight: 600; display: flex; align-items: center;
+            gap: 4px; min-width: 72px; text-align: center; white-space: nowrap; justify-content: center;
         }
-        
-        .phone-input {
-            flex: 1;
-        }
-        
+        .phone-input { flex: 1; }
+
         select.form-input {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            padding-right: 36px;
-            cursor: pointer;
+            background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer;
         }
-        
-        select.form-input option {
-            background: #1e293b;
-            color: white;
-        }
-        
+        select.form-input option { background: #1e293b; color: white; }
+
         .btn-login {
-            background: linear-gradient(135deg, #a855f7, #7c3aed);
-            border: none;
-            color: white;
-            font-weight: 700;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 8px;
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.35);
-            position: relative;
-            z-index: 1;
+            background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; color: white; font-weight: 700;
+            padding: 15px; border-radius: var(--radius-sm); font-size: 16px; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+            box-shadow: 0 6px 20px rgba(168,85,247,0.35); position: relative; z-index: 1;
         }
-        
-        .btn-login:active {
-            transform: scale(0.97);
-            opacity: 0.9;
-        }
-        
-        .btn-login:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .error-msg {
-            font-size: 12px;
-            color: #f87171;
-            display: none;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .error-msg.show {
-            display: flex;
-        }
+        .btn-login:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .app-wrapper {
-            display: none;
-            padding-bottom: 80px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .app-wrapper.active {
-            display: block;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 16px;
-        }
-        
-        .screen {
-            display: none;
-        }
-        
-        .screen.active {
-            display: block;
-        }
+        .login-footer { text-align: center; margin-top: 22px; font-size: 11px; opacity: 0.35; letter-spacing: 0.3px; position: relative; z-index: 1; }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            padding-top: 20px;
+        .error-msg { font-size: 12px; color: #f87171; display: none; align-items: center; gap: 4px; }
+        .error-msg.show { display: flex; }
+
+        .mensaje-bd {
+            padding: 11px; border-radius: 10px; font-size: 13px; text-align: center; display: none; margin-top: 6px; font-weight: 500;
         }
-        
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        
-        .header p {
-            font-size: 16px;
-            opacity: 0.8;
-        }
-        
-        .header-icons {
-            display: flex;
-            gap: 20px;
-            font-size: 20px;
-            opacity: 0.9;
-        }
-        
-        .user-greeting {
-            font-size: 13px;
-            opacity: 0.7;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .mensaje-bd.show { display: block; }
+        .mensaje-bd.success { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+        .mensaje-bd.error { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+        .app-wrapper { display: none; padding-bottom: 90px; position: relative; z-index: 1; }
+        .app-wrapper.active { display: block; }
+        .container { width: 100%; max-width: 480px; margin: 0 auto; padding: 18px; }
+        .screen { display: none; animation: fadeIn 0.25s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-top: calc(20px + var(--safe-top)); }
+        .header h1 { font-size: 25px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.4px; }
+        .header p { font-size: 15px; opacity: 0.65; }
+        .header-icons { display: flex; gap: 18px; font-size: 19px; opacity: 0.9; }
+        .header-icons i { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--card-border); }
+        .user-greeting { font-size: 13px; opacity: 0.65; display: flex; align-items: center; gap: 5px; }
 
         .featured-card {
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 22px;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(168, 85, 247, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 26px; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 20px rgba(168,85,247,0.08); border: 1px solid rgba(255,255,255,0.06);
         }
-        
-        .featured-img {
-            width: 100%;
-            height: 210px;
-            object-fit: cover;
+        .featured-badge {
+            position: absolute; top: 14px; left: 14px; background: rgba(168,85,247,0.9); backdrop-filter: blur(6px);
+            padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+            display: flex; align-items: center; gap: 5px; z-index: 2;
         }
-        
+        .featured-img { width: 100%; height: 220px; object-fit: cover; display: block; }
         .featured-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 22px 18px;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.3), transparent);
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 24px 20px 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0.35), transparent);
         }
-        
-        .featured-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .featured-desc {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 9px;
-        }
-        
-        .rating {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: 600;
-        }
-        
-        .rating i {
-            color: #facc15;
-        }
+        .featured-title { font-size: 21px; font-weight: 700; margin-bottom: 5px; letter-spacing: -0.3px; }
+        .featured-desc { font-size: 14px; opacity: 0.85; margin-bottom: 10px; }
+        .rating { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 14px; }
+        .rating i { color: #facc15; }
 
-        .categories {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 24px;
-        }
-        
+        .categories { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 28px; }
         .category-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 7px;
-            padding: 8px 0;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: none;
-            border: none;
-            flex: 1;
-            min-width: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 4px;
+            cursor: pointer; transition: all 0.2s ease; background: rgba(255,255,255,0.02); border: 1px solid var(--card-border);
+            border-radius: var(--radius-md); flex: 1; min-width: 0;
         }
-        
-        .category-btn:active {
-            transform: scale(0.92);
-            opacity: 0.85;
-        }
-        
+        .category-btn:active { transform: scale(0.94); opacity: 0.85; }
         .category-icon-circle {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: white;
-            transition: all 0.2s;
+            width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center;
+            justify-content: center; font-size: 18px; color: white; transition: all 0.2s;
         }
-        
-        .category-btn span {
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: -0.1px;
-            text-align: center;
-            line-height: 1;
-        }
+        .category-btn span { font-size: 11px; font-weight: 600; letter-spacing: -0.1px; text-align: center; line-height: 1.2; }
 
-        .cat-lugares .category-icon-circle {
-            background: linear-gradient(135deg, #065f46, #047857);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-        
-        .cat-lugares span {
-            color: #6ee7b7;
-        }
-        
-        .cat-actividades .category-icon-circle {
-            background: linear-gradient(135deg, #9a3412, #c2410c);
-            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
-        }
-        
-        .cat-actividades span {
-            color: #fdba74;
-        }
-        
-        .cat-gastronomia .category-icon-circle {
-            background: linear-gradient(135deg, #991b1b, #b91c1c);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        }
-        
-        .cat-gastronomia span {
-            color: #fca5a5;
-        }
-        
-        .cat-hospedaje .category-icon-circle {
-            background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        
-        .cat-hospedaje span {
-            color: #93c5fd;
-        }
+        .cat-lugares .category-icon-circle { background: linear-gradient(135deg, #065f46, #047857); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .cat-lugares span { color: #6ee7b7; }
+        .cat-actividades .category-icon-circle { background: linear-gradient(135deg, #9a3412, #c2410c); box-shadow: 0 4px 12px rgba(249,115,22,0.3); }
+        .cat-actividades span { color: #fdba74; }
+        .cat-gastronomia .category-icon-circle { background: linear-gradient(135deg, #991b1b, #b91c1c); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+        .cat-gastronomia span { color: #fca5a5; }
+        .cat-hospedaje .category-icon-circle { background: linear-gradient(135deg, #1e3a8a, #1d4ed8); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .cat-hospedaje span { color: #93c5fd; }
 
-        .section-top {
-            margin-bottom: 14px;
-        }
-        
-        .section-top h2 {
-            font-size: 19px;
-            font-weight: 700;
-        }
-
-        .recomendados {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        
+        .section-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-top h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; }
+        .section-top .see-all { font-size: 12.5px; color: var(--accent); font-weight: 600; opacity: 0.85; }
+        .recomendados { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
         .rec-card {
-            border-radius: 16px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.25s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: transform 0.25s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; border: 1px solid rgba(255,255,255,0.05);
         }
-        
-        .rec-card:active {
-            transform: scale(0.97);
-        }
-        
-        .rec-img {
-            width: 100%;
-            height: 130px;
-            object-fit: cover;
-        }
-        
+        .rec-card:active { transform: scale(0.97); }
+        .rec-img { width: 100%; height: 134px; object-fit: cover; display: block; }
         .rec-label {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 10px 12px;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
-            font-size: 12px;
-            font-weight: 600;
-            line-height: 1.3;
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 12px;
+            background: linear-gradient(to top, rgba(0,0,0,0.88), transparent); font-size: 12.5px; font-weight: 600; line-height: 1.3;
         }
 
-        .explorar-full {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 170px);
-            max-height: 630px;
-        }
-        
-        .explorar-top {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 8px;
-            flex-shrink: 0;
-        }
-        
+        /* ===== EXPLORAR ===== */
+        .explorar-full { display: flex; flex-direction: column; height: calc(100vh - 190px - var(--safe-top)); max-height: 660px; }
+        .explorar-top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; flex-shrink: 0; }
         .gps-mini {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(168, 85, 247, 0.08);
-            border: 1px solid rgba(168, 85, 247, 0.2);
-            border-radius: 12px;
-            padding: 8px 14px;
-            font-size: 11px;
-            font-weight: 600;
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2);
+            border-radius: var(--radius-sm); padding: 10px 14px; font-size: 11.5px; font-weight: 600;
         }
-        
-        .gps-mini i {
-            color: #a855f7;
-        }
-        
+        .gps-mini i { color: #a855f7; }
+        .gps-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; display: inline-block; margin-right: 4px; animation: pulseDot 1.6s infinite; }
+        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
         .weather-mini {
-            background: linear-gradient(135deg, rgba(17, 28, 46, 0.8), rgba(10, 20, 34, 0.8));
-            border-radius: 14px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid rgba(168, 85, 247, 0.12);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, rgba(17,28,46,0.85), rgba(10,20,34,0.85));
+            border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid rgba(168,85,247,0.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
-        
-        .weather-mini-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .weather-mini-left .fa {
-            font-size: 26px;
-        }
-        
-        .weather-mini-temp {
-            font-size: 22px;
-            font-weight: 800;
-            line-height: 1;
-        }
-        
-        .weather-mini-desc {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-        
-        .weather-mini-right {
-            display: flex;
-            gap: 10px;
-            font-size: 10px;
-            opacity: 0.7;
-        }
-        
-        .weather-mini-right span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .weather-mini-left { display: flex; align-items: center; gap: 12px; }
+        .weather-mini-left .fa { font-size: 28px; }
+        .weather-mini-temp { font-size: 23px; font-weight: 800; line-height: 1; }
+        .weather-mini-desc { font-size: 10.5px; opacity: 0.65; margin-top: 2px; }
+        .weather-mini-right { display: flex; gap: 12px; font-size: 10.5px; opacity: 0.7; }
+        .weather-mini-right span { display: flex; align-items: center; gap: 4px; }
 
         .map-main {
-            flex: 1;
-            border-radius: 18px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-            position: relative;
-            min-height: 300px;
+            flex: 1; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6); position: relative; min-height: 300px;
         }
-        
-        #mapFull {
-            height: 100%;
-            width: 100%;
-        }
-        
-        .map-controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            z-index: 1000;
-        }
-        
+        #mapFull { height: 100%; width: 100%; }
+        .map-controls { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
         .map-ctrl-btn {
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            transition: 0.2s;
+            background: rgba(10,15,25,0.75); border: 1px solid rgba(255,255,255,0.15); color: white;
+            width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px); transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        
-        .map-ctrl-btn:active {
-            background: rgba(255, 255, 255, 0.2);
+        .map-ctrl-btn:active { background: rgba(255,255,255,0.2); transform: scale(0.92); }
+        .map-ctrl-btn.active-ctrl { background: rgba(168,85,247,0.65); border-color: rgba(168,85,247,0.8); }
+
+        .map-mode-badge {
+            position: absolute; top: 12px; left: 12px; z-index: 1000; background: rgba(10,15,25,0.8);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(56,189,248,0.3);
+            padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+            color: #7dd3fc; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        
-        .map-ctrl-btn.active-ctrl {
-            background: rgba(168, 85, 247, 0.5);
-            border-color: rgba(168, 85, 247, 0.7);
-        }
-        
-        .map-legend {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            display: flex;
-            gap: 6px;
-            z-index: 1000;
-            flex-wrap: wrap;
-        }
-        
+
+        .map-legend { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 6px; z-index: 1000; flex-wrap: wrap; max-width: calc(100% - 24px); }
         .legend-item {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border-radius: 14px;
-            padding: 4px 10px;
-            font-size: 9px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            border-radius: 14px; padding: 5px 10px; font-size: 9.5px; font-weight: 600;
+            display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.08);
         }
-        
-        .legend-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        
-        .legend-dot.purple {
-            background: #a855f7;
-            box-shadow: 0 0 6px #c084fc;
-        }
-        
-        .legend-dot.blue {
-            background: #38bdf8;
-            box-shadow: 0 0 6px #0ea5e9;
-        }
-        
-        .legend-dot.green {
-            background: #10b981;
-            box-shadow: 0 0 6px #10b981;
-        }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .legend-dot.purple { background: #a855f7; box-shadow: 0 0 6px #c084fc; }
+        .legend-dot.blue { background: #38bdf8; box-shadow: 0 0 6px #0ea5e9; }
+        .legend-dot.green { background: #10b981; box-shadow: 0 0 6px #10b981; }
+        .legend-dot.red { background: #ef4444; box-shadow: 0 0 6px #f87171; }
 
-        .route-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.55);
-            z-index: 9998;
-            display: none;
-        }
-        
-        .route-overlay.active {
-            display: block;
-        }
-        
+        .route-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9998; display: none; }
+        .route-overlay.active { display: block; }
         .route-panel {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translate(-50%, 100%);
-            width: 100%;
-            max-width: 480px;
-            background: rgba(10, 15, 25, 0.98);
-            border-radius: 24px 24px 0 0;
-            padding: 20px 18px 28px;
-            z-index: 9999;
-            transition: transform 0.35s ease;
-            border-top: 2px solid rgba(168, 85, 247, 0.5);
-            box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            position: fixed; bottom: 0; left: 50%; transform: translate(-50%, 100%); width: 100%; max-width: 480px;
+            background: rgba(10,15,25,0.98); border-radius: 24px 24px 0 0; padding: 22px 20px calc(30px + var(--safe-bottom)); z-index: 9999;
+            transition: transform 0.35s ease; border-top: 2px solid rgba(168,85,247,0.5);
+            box-shadow: 0 -15px 40px rgba(0,0,0,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         }
-        
-        .route-panel.active {
-            transform: translate(-50%, 0);
-        }
-        
-        .route-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .route-panel h3 {
-            font-size: 17px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .route-close {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        
-        .route-info-row {
-            display: flex;
-            gap: 14px;
-            font-size: 13px;
-            opacity: 0.8;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-        }
-        
-        .route-info-row span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .route-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
+        .route-panel.active { transform: translate(-50%, 0); }
+        .route-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .route-panel h3 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .route-close { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+        .route-info-row { display: flex; gap: 14px; font-size: 13px; opacity: 0.75; margin-bottom: 16px; flex-wrap: wrap; }
+        .route-info-row span { display: flex; align-items: center; gap: 5px; }
+        .route-actions { display: flex; gap: 10px; }
         .btn-start {
-            flex: 1;
-            background: linear-gradient(135deg, #a855f7, #7c3aed);
-            border: none;
-            color: white;
-            font-weight: 700;
-            padding: 14px;
-            border-radius: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 15px;
+            flex: 1; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; color: white;
+            font-weight: 700; padding: 14px; border-radius: var(--radius-sm); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 6px; font-size: 15px;
         }
-        
-        .btn-start:active {
-            transform: scale(0.97);
-        }
-        
+        .btn-start:active { transform: scale(0.97); }
         .btn-cancel {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #f87171;
-            padding: 14px 20px;
-            border-radius: 14px;
-            cursor: pointer;
-            font-weight: 600;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+            color: #f87171; padding: 14px 20px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;
+        }
+        .route-active-bar {
+            position: fixed; top: calc(16px + var(--safe-top)); left: 50%; transform: translateX(-50%); width: calc(100% - 32px);
+            max-width: 448px; background: rgba(168,85,247,0.95); backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px); border-radius: var(--radius-md); padding: 13px 18px; z-index: 9997;
+            display: none; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14px;
+            box-shadow: 0 8px 25px rgba(168,85,247,0.5); border: 1px solid rgba(255,255,255,0.3);
+        }
+        .route-active-bar.active { display: flex; }
+        .route-active-bar button {
+            background: rgba(255,255,255,0.2); border: none; color: white; width: 34px; height: 34px;
+            border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
         }
 
-        .route-active-bar {
-            position: fixed;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 32px);
-            max-width: 448px;
-            background: rgba(168, 85, 247, 0.95);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-radius: 16px;
-            padding: 12px 18px;
-            z-index: 9997;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            font-weight: 700;
-            font-size: 14px;
-            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        /* ===== FAVORITOS ===== */
+        .empty-state {
+            background: rgba(30,41,59,0.4); border-radius: var(--radius-lg); padding: 48px 24px; text-align: center;
+            border: 1px dashed rgba(255,255,255,0.12);
         }
-        
-        .route-active-bar.active {
-            display: flex;
+        .empty-state i { font-size: 46px; opacity: 0.28; margin-bottom: 14px; display: block; }
+        .empty-state p { opacity: 0.55; font-size: 14px; line-height: 1.5; }
+
+        /* ===== PERFIL ===== */
+        .profile-card {
+            display: flex; align-items: center; gap: 16px; background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(124,58,237,0.04));
+            border: 1px solid rgba(168,85,247,0.2); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 18px;
         }
-        
-        .route-active-bar button {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .profile-avatar {
+            width: 64px; height: 64px; background: linear-gradient(135deg,#3b2e5e,#4c1d95); border-radius: 20px;
+            display: flex; align-items: center; justify-content: center; font-size: 30px; flex-shrink: 0;
+            box-shadow: 0 8px 20px rgba(168,85,247,0.35);
         }
+        .profile-info { flex: 1; min-width: 0; }
+        .profile-name { font-weight: 700; font-size: 18px; letter-spacing: -0.2px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .profile-tag { font-size: 12.5px; opacity: 0.65; display: flex; align-items: center; gap: 5px; }
+        .profile-edit-btn {
+            width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border);
+            color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 13px;
+        }
+        .profile-edit-btn:active { transform: scale(0.9); }
+
+        .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+        .stat-box {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md);
+            padding: 14px 8px; text-align: center;
+        }
+        .stat-num { font-size: 21px; font-weight: 800; color: #c084fc; letter-spacing: -0.3px; }
+        .stat-label { font-size: 10.5px; opacity: 0.6; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+
+        .settings-section { margin-bottom: 22px; }
+        .settings-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.5; margin-bottom: 10px; padding-left: 2px; }
+        .settings-list { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); overflow: hidden; }
+        .settings-item {
+            display: flex; align-items: center; gap: 13px; padding: 14px 16px; cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s;
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:active { background: rgba(255,255,255,0.04); }
+        .settings-item-icon {
+            width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
+        .settings-item-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .settings-item-text span { font-size: 14.5px; font-weight: 600; }
+        .settings-item-text small { font-size: 12px; opacity: 0.55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .settings-chevron { opacity: 0.3; font-size: 13px; }
+
+        .btn-logout {
+            width: 100%; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5;
+            font-weight: 700; padding: 14px; border-radius: var(--radius-sm); cursor: pointer; font-size: 14.5px;
+            display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+        }
+        .btn-logout:active { transform: scale(0.98); background: rgba(239,68,68,0.16); }
+
+        .app-version { text-align: center; font-size: 11px; opacity: 0.3; margin-top: 18px; letter-spacing: 0.3px; }
 
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px;
-            background: rgba(10, 15, 26, 0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 10px 0 22px;
-            display: flex;
-            justify-content: space-around;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            z-index: 100;
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px;
+            background: rgba(10,15,26,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 12px 0 calc(14px + var(--safe-bottom)); display: flex; justify-content: space-around;
+            border-top: 1px solid rgba(255,255,255,0.08); z-index: 100;
         }
-        
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            color: #94a3b8;
-            font-size: 11px;
-            cursor: pointer;
-            transition: color 0.2s;
-            background: none;
-            border: none;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            color: #94a3b8; font-size: 11px; cursor: pointer; transition: color 0.2s; background: none; border: none;
+            font-weight: 600;
         }
-        
-        .nav-item.active {
-            color: white;
-        }
-        
-        .nav-item i {
-            font-size: 20px;
-        }
-
-        /* PWA Splash Screen */
-        @media (display-mode: standalone) {
-            .app-wrapper {
-                padding-top: env(safe-area-inset-top);
-            }
-        }
+        .nav-item.active { color: white; }
+        .nav-item i { font-size: 20px; }
+        .nav-item:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
+    <div class="status-bar-fill"></div>
+
     <div class="login-container" id="loginContainer">
         <div class="login-card">
             <div class="login-header">
@@ -863,7 +391,7 @@
                 <h2>Bienvenido</h2>
                 <p>Ingresa tus datos para continuar</p>
             </div>
-            <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+            <form class="login-form" id="loginForm" onsubmit="return false;">
                 <div class="form-group">
                     <label><i class="fa fa-user"></i> Nombre completo</label>
                     <input type="text" class="form-input" id="inputNombre" placeholder="Ej: Juan Pérez" required>
@@ -884,10 +412,12 @@
                     </div>
                     <span class="error-msg" id="errorPhone"><i class="fa fa-exclamation-circle"></i> Ingresa un número válido</span>
                 </div>
-                <button type="submit" class="btn-login" id="btnLogin">
+                <div class="mensaje-bd" id="mensajeBD"></div>
+                <button type="submit" class="btn-login" id="btnLogin" onclick="handleLogin()">
                     <i class="fa fa-sign-in"></i> Ingresar
                 </button>
             </form>
+            <div class="login-footer">Copa-Tur · Turismo Copacabana, Bolivia</div>
         </div>
     </div>
 
@@ -920,84 +450,49 @@
                         <h1>Hola, <span id="userNameDisplay">Viajero</span></h1>
                         <span class="user-greeting"><i class="fa fa-map-marker"></i> <span id="userCountryDisplay">--</span></span>
                     </div>
-                    <div class="header-icons">
-                        <i class="fa fa-bars"></i>
-                        <i class="fa fa-bell-o"></i>
-                    </div>
+                    <div class="header-icons"><i class="fa fa-bars"></i><i class="fa fa-bell-o"></i></div>
                 </div>
                 <div class="featured-card">
+                    <div class="featured-badge"><i class="fa fa-star"></i> Destacado</div>
                     <img src="https://live.staticflickr.com/4596/27540646779_6c26d7fdf2_b.jpg" alt="Basílica" class="featured-img">
                     <div class="featured-info">
                         <h3 class="featured-title">Basílica de Copacabana</h3>
                         <p class="featured-desc">Fe, historia y cultura frente al lago</p>
-                        <div class="rating">
-                            <i class="fa fa-star"></i>
-                            <span>4.9</span>
-                        </div>
+                        <div class="rating"><i class="fa fa-star"></i><span>4.9</span></div>
                     </div>
                 </div>
                 <div class="categories">
-                    <button class="category-btn cat-lugares" onclick="navigateToExplorar()">
-                        <div class="category-icon-circle"><i class="fa fa-map-marker"></i></div>
-                        <span>Lugares</span>
-                    </button>
-                    <button class="category-btn cat-actividades" onclick="navigateToExplorar()">
-                        <div class="category-icon-circle"><i class="fa fa-futbol-o"></i></div>
-                        <span>Actividades</span>
-                    </button>
-                    <button class="category-btn cat-gastronomia" onclick="navigateToExplorar()">
-                        <div class="category-icon-circle"><i class="fa fa-cutlery"></i></div>
-                        <span>Gastronomía</span>
-                    </button>
-                    <button class="category-btn cat-hospedaje" onclick="navigateToExplorar()">
-                        <div class="category-icon-circle"><i class="fa fa-bed"></i></div>
-                        <span>Hospedaje</span>
-                    </button>
+                    <button class="category-btn cat-lugares" onclick="navigateToExplorar()"><div class="category-icon-circle"><i class="fa fa-map-marker"></i></div><span>Lugares</span></button>
+                    <button class="category-btn cat-actividades" onclick="navigateToExplorar()"><div class="category-icon-circle"><i class="fa fa-futbol-o"></i></div><span>Actividades</span></button>
+                    <button class="category-btn cat-gastronomia" onclick="navigateToExplorar()"><div class="category-icon-circle"><i class="fa fa-cutlery"></i></div><span>Gastronomía</span></button>
+                    <button class="category-btn cat-hospedaje" onclick="navigateToExplorar()"><div class="category-icon-circle"><i class="fa fa-bed"></i></div><span>Hospedaje</span></button>
                 </div>
-                <div class="section-top">
-                    <h2>Recomendados</h2>
-                </div>
+                <div class="section-top"><h2>Recomendados</h2><span class="see-all">Ver todo</span></div>
                 <div class="recomendados">
-                    <div class="rec-card">
-                        <img src="https://www.suitessultan.com/media/images/content/paseos-caminatas/calvario/calvario-03.jpg" class="rec-img">
-                        <div class="rec-label">Cerro Calvario</div>
-                    </div>
-                    <div class="rec-card">
-                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiVVGRCX5Eh1wNaCmvbbsZPiC5zy0pl11b-7OGb1i5ctOLNZrY_xIsoRFTVoQIKmi-D3NnPFZu4KdVRY9Cs65VAKVaaV59j3xOc9dlo5bkK4VUnVzeI1VB2EbXuSnjhXb1DqSqqV3AJa3k/s1600/Boca+del+sapo.jpg" class="rec-img">
-                        <div class="rec-label">Boca del Sapo</div>
-                    </div>
-                    <div class="rec-card">
-                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-WXjVx4-6e5iPg9YM1dNu9spUPL7g5Rf8-A&s" class="rec-img">
-                        <div class="rec-label">Gruta Virgen de Lourdes</div>
-                    </div>
-                    <div class="rec-card">
-                        <img src="https://media-cdn.tripadvisor.com/media/photo-s/0e/74/cf/b1/islas-flotantes-lago.jpg" class="rec-img">
-                        <div class="rec-label">Islas Flotantes</div>
-                    </div>
+                    <div class="rec-card"><img src="https://www.suitessultan.com/media/images/content/paseos-caminatas/calvario/calvario-03.jpg" class="rec-img"><div class="rec-label">Cerro Calvario</div></div>
+                    <div class="rec-card"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiVVGRCX5Eh1wNaCmvbbsZPiC5zy0pl11b-7OGb1i5ctOLNZrY_xIsoRFTVoQIKmi-D3NnPFZu4KdVRY9Cs65VAKVaaV59j3xOc9dlo5bkK4VUnVzeI1VB2EbXuSnjhXb1DqSqqV3AJa3k/s1600/Boca+del+sapo.jpg" class="rec-img"><div class="rec-label">Boca del Sapo</div></div>
+                    <div class="rec-card"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-WXjVx4-6e5iPg9YM1dNu9spUPL7g5Rf8-A&s" class="rec-img"><div class="rec-label">Gruta Virgen de Lourdes</div></div>
+                    <div class="rec-card"><img src="https://media-cdn.tripadvisor.com/media/photo-s/0e/74/cf/b1/islas-flotantes-lago.jpg" class="rec-img"><div class="rec-label">Islas Flotantes</div></div>
                 </div>
             </div>
         </div>
 
         <div class="screen" id="screenExplorar">
             <div class="container" style="height:100%;display:flex;flex-direction:column;">
-                <div class="header" style="margin-bottom:10px;">
-                    <div class="header-icons">
-                        <i class="fa fa-compass" style="color:#a855f7;"></i>
-                    </div>
+                <div class="header" style="margin-bottom:14px;">
+                    <div><h1 style="font-size:21px;">Explorar</h1><p style="font-size:13.5px;">Copacabana en tiempo real</p></div>
+                    <div class="header-icons"><i class="fa fa-compass" style="color:#a855f7;"></i></div>
                 </div>
                 <div class="explorar-full">
                     <div class="explorar-top">
                         <div class="gps-mini">
-                            <span><i class="fa fa-satellite-dish"></i> <span id="gpsText">Buscando GPS...</span></span>
+                            <span><span class="gps-dot" id="gpsDot"></span><span id="gpsText">Buscando GPS...</span></span>
                             <span style="opacity:0.5;font-size:10px;" id="gpsCoords">--</span>
                         </div>
                         <div class="weather-mini">
                             <div class="weather-mini-left">
                                 <i class="fa fa-sun-o" id="wIcon" style="color:#facc15;"></i>
-                                <div>
-                                    <div class="weather-mini-temp" id="wTemp">--°</div>
-                                    <div class="weather-mini-desc" id="wDesc">Cargando...</div>
-                                </div>
+                                <div><div class="weather-mini-temp" id="wTemp">--°</div><div class="weather-mini-desc" id="wDesc">Cargando...</div></div>
                             </div>
                             <div class="weather-mini-right">
                                 <span><i class="fa fa-flag"></i> <span id="wWind">--</span></span>
@@ -1008,21 +503,18 @@
                     </div>
                     <div class="map-main">
                         <div id="mapFull"></div>
+                        <div class="map-mode-badge" id="mapModeBadge" style="display:none;"><i class="fa fa-globe"></i> Modo satélite</div>
                         <div class="map-controls">
-                            <button class="map-ctrl-btn active-ctrl" id="btn3D" onclick="toggle3D()">
-                                <i class="fa fa-cube"></i>
-                            </button>
-                            <button class="map-ctrl-btn" onclick="centerOnUser()">
-                                <i class="fa fa-crosshairs"></i>
-                            </button>
-                            <button class="map-ctrl-btn" onclick="resetNorth()">
-                                <i class="fa fa-compass"></i>
-                            </button>
+                            <button class="map-ctrl-btn" id="btnSat" onclick="toggleSatellite()" title="Modo satélite"><i class="fa fa-globe"></i></button>
+                            <button class="map-ctrl-btn active-ctrl" id="btn3D" onclick="toggle3D()" title="Vista 3D"><i class="fa fa-cube"></i></button>
+                            <button class="map-ctrl-btn" onclick="centerOnUser()" title="Mi ubicación"><i class="fa fa-crosshairs"></i></button>
+                            <button class="map-ctrl-btn" onclick="resetNorth()" title="Norte"><i class="fa fa-compass"></i></button>
                         </div>
                         <div class="map-legend">
                             <div class="legend-item"><div class="legend-dot purple"></div> Turístico</div>
                             <div class="legend-item"><div class="legend-dot blue"></div> Tú</div>
                             <div class="legend-item" id="legendDestino" style="display:none;"><div class="legend-dot green"></div> Destino</div>
+                            <div class="legend-item"><div class="legend-dot red"></div> Restricción</div>
                         </div>
                     </div>
                 </div>
@@ -1031,73 +523,103 @@
 
         <div class="screen" id="screenFavoritos">
             <div class="container">
-                <div class="header">
-                    <div>
-                        <h1>Favoritos</h1>
-                        <p>Tus lugares guardados</p>
-                    </div>
-                </div>
-                <div style="background:rgba(30,41,59,0.5);border-radius:20px;padding:40px 20px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
-                    <i class="fa fa-heart-o" style="font-size:48px;opacity:0.3;margin-bottom:12px;display:block;"></i>
-                    <p style="opacity:0.6;">Guarda tus lugares favoritos<br>tocando los puntos en el mapa</p>
-                </div>
-            </div>
-        </div>
-        <div class="screen" id="screenPerfil">
-            <div class="container">
-                <div class="header">
-                    <div>
-                        <h1>Perfil</h1>
-                        <p id="profileSubtitle">Viajero Copacabana</p>
-                    </div>
-                </div>
-                <div style="background:rgba(30,41,59,0.5);border-radius:20px;padding:24px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
-                    <div style="width:80px;height:80px;background:linear-gradient(135deg,#3b2e5e,#4c1d95);border-radius:24px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 20px rgba(168,85,247,0.3);">
-                        <i class="fa fa-user-circle"></i>
-                    </div>
-                    <div style="font-weight:700;font-size:18px;" id="profileName">Viajero Copacabana</div>
-                    <div style="opacity:0.6;" id="profilePhone">--</div>
-                    <div style="opacity:0.5;font-size:13px;margin-top:4px;" id="profileCountry">--</div>
+                <div class="header"><div><h1>Favoritos</h1><p>Tus lugares guardados</p></div></div>
+                <div class="empty-state">
+                    <i class="fa fa-heart-o"></i>
+                    <p>Guarda tus lugares favoritos<br>tocando los puntos en el mapa</p>
                 </div>
             </div>
         </div>
 
+        <div class="screen" id="screenPerfil">
+            <div class="container">
+                <div class="header"><div><h1>Perfil</h1><p>Gestiona tu cuenta</p></div></div>
+
+                <div class="profile-card">
+                    <div class="profile-avatar"><i class="fa fa-user-circle"></i></div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="profileName">Viajero Copacabana</div>
+                        <div class="profile-tag"><i class="fa fa-map-marker"></i> <span id="profileCountry">--</span></div>
+                    </div>
+                    <button class="profile-edit-btn" title="Editar perfil"><i class="fa fa-pencil"></i></button>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="stat-box"><div class="stat-num" id="statFavoritos">0</div><div class="stat-label">Favoritos</div></div>
+                    <div class="stat-box"><div class="stat-num" id="statRutas">0</div><div class="stat-label">Rutas</div></div>
+                    <div class="stat-box"><div class="stat-num" id="statVisitas">1</div><div class="stat-label">Visitas</div></div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Cuenta</div>
+                    <div class="settings-list">
+                        <div class="settings-item">
+                            <div class="settings-item-icon" style="background:rgba(168,85,247,0.15);color:#c084fc;"><i class="fa fa-phone"></i></div>
+                            <div class="settings-item-text"><span>Teléfono</span><small id="profilePhone">--</small></div>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-icon" style="background:rgba(56,189,248,0.15);color:#7dd3fc;"><i class="fa fa-globe"></i></div>
+                            <div class="settings-item-text"><span>País</span><small id="profileCountry2">--</small></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Preferencias</div>
+                    <div class="settings-list">
+                        <div class="settings-item">
+                            <div class="settings-item-icon" style="background:rgba(16,185,129,0.15);color:#6ee7b7;"><i class="fa fa-bell"></i></div>
+                            <div class="settings-item-text"><span>Notificaciones</span></div>
+                            <i class="fa fa-chevron-right settings-chevron"></i>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-icon" style="background:rgba(249,115,22,0.15);color:#fdba74;"><i class="fa fa-map"></i></div>
+                            <div class="settings-item-text"><span>Modo de mapa preferido</span></div>
+                            <i class="fa fa-chevron-right settings-chevron"></i>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-icon" style="background:rgba(148,163,184,0.15);color:#cbd5e1;"><i class="fa fa-question-circle"></i></div>
+                            <div class="settings-item-text"><span>Ayuda y soporte</span></div>
+                            <i class="fa fa-chevron-right settings-chevron"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-logout" onclick="cerrarSesion()"><i class="fa fa-sign-out"></i> Cerrar sesión</button>
+                <div class="app-version">Copa-Tur v1.2.0</div>
+            </div>
+        </div>
+
         <div class="bottom-nav">
-            <button class="nav-item active" data-screen="screenInicio">
-                <i class="fa fa-home"></i>
-                <span>Inicio</span>
-            </button>
-            <button class="nav-item" data-screen="screenExplorar">
-                <i class="fa fa-compass"></i>
-                <span>Explorar</span>
-            </button>
-            <button class="nav-item" data-screen="screenFavoritos">
-                <i class="fa fa-heart-o"></i>
-                <span>Favoritos</span>
-            </button>
-            <button class="nav-item" data-screen="screenPerfil">
-                <i class="fa fa-user-o"></i>
-                <span>Perfil</span>
-            </button>
+            <button class="nav-item active" data-screen="screenInicio"><i class="fa fa-home"></i><span>Inicio</span></button>
+            <button class="nav-item" data-screen="screenExplorar"><i class="fa fa-compass"></i><span>Explorar</span></button>
+            <button class="nav-item" data-screen="screenFavoritos"><i class="fa fa-heart-o"></i><span>Favoritos</span></button>
+            <button class="nav-item" data-screen="screenPerfil"><i class="fa fa-user-o"></i><span>Perfil</span></button>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // PWA Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('SW registrado:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('SW falló:', error);
-                    });
-            });
-        }
+        // ============================================
+        // CREDENCIALES SUPABASE
+        // ============================================
+        const SUPABASE_URL = 'https://vxcwnpvjceftqxkfsqec.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_KFEiVnT5FiXdV9nOCRQeNQ_DjDSSnR3';
 
-        // Código de países
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('✅ Supabase conectado');
+
+        let currentLat = -16.1667, currentLng = -69.0833, currentHeading = 0, currentAccuracy = 20;
+        let userMarker = null, headingMarker = null, destinationMarker = null;
+        let activeRoute = null, selectedPoint = null, routeLine = null;
+        let lastWeatherFetch = 0, firstLocation = false, is3DMode = true, mapFull = null;
+        let puntosInteres = [], restriccionesViales = [], currentUser = null;
+        let baseTileLayer = null, mapMode = 'dark';
+        const tileSources = {
+            dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        };
+
         const paises = [
             { nombre: 'Argentina', codigo: 'AR', prefijo: '+54' },
             { nombre: 'Bolivia', codigo: 'BO', prefijo: '+591' },
@@ -1118,9 +640,7 @@
             const s = document.getElementById('inputPais');
             paises.forEach(p => {
                 const o = document.createElement('option');
-                o.value = p.codigo;
-                o.textContent = p.nombre;
-                o.dataset.prefijo = p.prefijo;
+                o.value = p.codigo; o.textContent = p.nombre; o.dataset.prefijo = p.prefijo;
                 s.appendChild(o);
             });
         }
@@ -1128,173 +648,278 @@
         function updatePrefix() {
             const s = document.getElementById('inputPais');
             const sel = s.options[s.selectedIndex];
-            document.getElementById('phonePrefix').textContent = sel.dataset.prefijo || '+591';
+            if (sel && sel.dataset && sel.dataset.prefijo) {
+                document.getElementById('phonePrefix').textContent = sel.dataset.prefijo;
+            }
         }
 
-        function handleLogin(e) {
-            e.preventDefault();
+        function mostrarMensaje(texto, tipo) {
+            const el = document.getElementById('mensajeBD');
+            el.textContent = texto;
+            el.className = 'mensaje-bd show ' + tipo;
+            setTimeout(() => { el.className = 'mensaje-bd'; }, 4000);
+        }
+
+        // ============================================
+        // LOGIN - SOLO BASE DE DATOS
+        // ============================================
+        async function handleLogin() {
             const n = document.getElementById('inputNombre').value.trim();
             const ps = document.getElementById('inputPais');
             const pc = ps.value;
             const pn = ps.options[ps.selectedIndex]?.textContent || '';
             const pr = document.getElementById('phonePrefix').textContent;
             const ph = document.getElementById('inputPhone').value.trim();
-            let v = true;
-            
+
             document.querySelectorAll('.error-msg').forEach(el => el.classList.remove('show'));
-            
-            if (!n) {
-                document.getElementById('errorNombre').classList.add('show');
-                v = false;
+
+            let valid = true;
+            if (!n) { document.getElementById('errorNombre').classList.add('show'); valid = false; }
+            if (!pc) { document.getElementById('errorPais').classList.add('show'); valid = false; }
+            if (!ph || ph.length < 6) { document.getElementById('errorPhone').classList.add('show'); valid = false; }
+            if (!valid) return;
+
+            const telefono = pr + ' ' + ph;
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Verificando en base de datos...';
+
+            try {
+                // PRIMERO: Buscar si existe en la tabla usuarios
+                const { data: existentes, error: errorBusqueda } = await db
+                    .from('usuarios')
+                    .select('*')
+                    .eq('telefono', telefono);
+
+                if (errorBusqueda) {
+                    mostrarMensaje('Error al verificar: ' + errorBusqueda.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-sign-in"></i> Ingresar';
+                    return;
+                }
+
+                if (existentes && existentes.length > 0) {
+                    // USUARIO ENCONTRADO EN BD - Actualizar y entrar
+                    const user = existentes[0];
+                    console.log('✅ Usuario encontrado en BD:', user.nombre);
+
+                    const { error: errorUpdate } = await db
+                        .from('usuarios')
+                        .update({
+                            ultimo_acceso: new Date().toISOString(),
+                            nombre: n,
+                            pais: pn,
+                            pais_codigo: pc
+                        })
+                        .eq('id', user.id);
+
+                    if (errorUpdate) console.warn('Error al actualizar:', errorUpdate.message);
+
+                    mostrarMensaje('✅ Usuario verificado. Bienvenido ' + user.nombre + '!', 'success');
+                    currentUser = user;
+
+                    setTimeout(() => entrarApp(user.nombre, user.pais, user.pais_codigo, user.telefono), 600);
+
+                } else {
+                    // USUARIO NO EXISTE - Registrar nuevo
+                    console.log('🆕 Registrando nuevo usuario en BD:', n);
+
+                    const { data: nuevo, error: errorInsert } = await db
+                        .from('usuarios')
+                        .insert([{
+                            nombre: n,
+                            pais: pn,
+                            pais_codigo: pc,
+                            telefono: telefono,
+                            ultimo_acceso: new Date().toISOString()
+                        }])
+                        .select()
+                        .single();
+
+                    if (errorInsert) {
+                        console.error('Error al insertar:', errorInsert);
+                        mostrarMensaje('Error al registrar: ' + errorInsert.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa fa-sign-in"></i> Ingresar';
+                        return;
+                    }
+
+                    console.log('✅ Usuario registrado en BD:', nuevo.id);
+                    mostrarMensaje('✅ Registro exitoso! Bienvenido ' + n, 'success');
+                    currentUser = nuevo;
+
+                    setTimeout(() => entrarApp(n, pn, pc, telefono), 600);
+                }
+
+            } catch (error) {
+                console.error('❌ Error crítico:', error);
+                mostrarMensaje('Error de conexión: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-sign-in"></i> Ingresar';
             }
-            if (!pc) {
-                document.getElementById('errorPais').classList.add('show');
-                v = false;
-            }
-            if (!ph || ph.length < 6) {
-                document.getElementById('errorPhone').classList.add('show');
-                v = false;
-            }
-            
-            if (!v) return;
-            
-            const u = { nombre: n, pais: pn, paisCodigo: pc, telefono: pr + ' ' + ph };
-            localStorage.setItem('userData', JSON.stringify(u));
-            
-            document.getElementById('userNameDisplay').textContent = n;
-            document.getElementById('userCountryDisplay').textContent = pn;
-            document.getElementById('profileName').textContent = n;
-            document.getElementById('profilePhone').textContent = pr + ' ' + ph;
-            document.getElementById('profileCountry').textContent = pn;
-            document.getElementById('profileSubtitle').textContent = pn;
-            
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('appWrapper').classList.add('active');
-            
-            setTimeout(() => {
-                if (typeof mapFull !== 'undefined') mapFull.invalidateSize();
-            }, 300);
         }
 
+        function entrarApp(nombre, pais, paisCodigo, telefono) {
+            localStorage.setItem('userData', JSON.stringify({ nombre, pais, paisCodigo, telefono }));
+
+            document.getElementById('userNameDisplay').textContent = nombre;
+            document.getElementById('userCountryDisplay').textContent = pais;
+            document.getElementById('profileName').textContent = nombre;
+            document.getElementById('profilePhone').textContent = telefono;
+            document.getElementById('profileCountry').textContent = pais;
+            document.getElementById('profileCountry2').textContent = pais;
+
+            const visitas = (parseInt(localStorage.getItem('visitCount') || '0', 10)) + 1;
+            localStorage.setItem('visitCount', String(visitas));
+            const sv = document.getElementById('statVisitas');
+            if (sv) sv.textContent = visitas;
+
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appWrapper').classList.add('active');
+
+            cargarDatosDesdeBD();
+        }
+
+        window.cerrarSesion = function() {
+            localStorage.removeItem('userData');
+            document.getElementById('appWrapper').classList.remove('active');
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('inputNombre').value = '';
+            document.getElementById('inputPhone').value = '';
+            document.getElementById('inputPais').value = '';
+            updatePrefix();
+        };
+
+        // ============================================
+        // CARGAR DATOS DESDE BASE DE DATOS
+        // ============================================
+        async function cargarDatosDesdeBD() {
+            try {
+                const { data: puntos, error: ep } = await db
+                    .from('puntos_interes').select('*').eq('activo', true).order('rating', { ascending: false });
+                if (ep) console.error('Error al cargar puntos:', ep.message);
+                else if (puntos && puntos.length > 0) { puntosInteres = puntos; console.log('✅ Puntos cargados de BD:', puntosInteres.length); }
+
+                const { data: rest, error: er } = await db
+                    .from('restricciones_viales').select('*').eq('activo', true);
+                if (er) console.error('Error al cargar restricciones:', er.message);
+                else if (rest && rest.length > 0) { restriccionesViales = rest; console.log('✅ Restricciones cargadas de BD:', restriccionesViales.length); }
+            } catch (e) { console.error('Error:', e.message); }
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
         function init() {
             populatePaises();
             updatePrefix();
-            const d = localStorage.getItem('userData');
-            if (d) {
-                const u = JSON.parse(d);
-                document.getElementById('inputNombre').value = u.nombre || '';
-                if (u.paisCodigo) {
-                    document.getElementById('inputPais').value = u.paisCodigo;
-                    updatePrefix();
-                }
-                document.getElementById('inputPhone').value = u.telefono ? u.telefono.replace(document.getElementById('phonePrefix').textContent + ' ', '') : '';
-            }
+
+            // SIEMPRE mostrar login primero
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('appWrapper').classList.remove('active');
+
+            iniciarGPS();
         }
-        
-        init();
-        
+
+        function iniciarGPS() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(geoSuccess, geoError, { enableHighAccuracy: true, timeout: 15000 });
+            navigator.geolocation.watchPosition(geoSuccess, geoError, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000, distanceFilter: 3 });
+        }
+
+        function geoSuccess(pos) {
+            updateUserPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.coords.heading);
+            if (lastWeatherFetch === 0) fetchWeather(pos.coords.latitude, pos.coords.longitude);
+        }
+        function geoError(err) {
+            const el = document.getElementById('gpsText');
+            if (el) el.textContent = 'GPS no disponible';
+            const dot = document.getElementById('gpsDot');
+            if (dot) dot.style.background = '#ef4444';
+        }
+
+        function updateUserPosition(lat, lng, acc, head) {
+            currentLat = lat; currentLng = lng; currentAccuracy = acc || 20;
+            if (head !== null && head !== undefined) currentHeading = head;
+            if (mapFull && userMarker) userMarker.setLatLng([lat, lng]);
+            if (mapFull && headingMarker) { headingMarker.setLatLng([lat, lng]); headingMarker.setIcon(createHeadingMarker(currentHeading)); }
+            if (mapFull && !firstLocation) { firstLocation = true; mapFull.setView([lat, lng], 16, { animate: true, pitch: 60 }); }
+            const gt = document.getElementById('gpsText'), gc = document.getElementById('gpsCoords');
+            if (gt) gt.textContent = 'GPS activo ±' + Math.round(currentAccuracy) + 'm';
+            if (gc) gc.textContent = lat.toFixed(4) + ', ' + lng.toFixed(4);
+            if (Date.now() - lastWeatherFetch > 30000) fetchWeather(lat, lng);
+        }
+
+        async function fetchWeather(lat, lng) {
+            lastWeatherFetch = Date.now();
+            try {
+                const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure,is_day&timezone=auto`);
+                if (!r.ok) return;
+                const d = await r.json(), c = d.current;
+                updateWeatherUI(Math.round(c.temperature_2m), c.weather_code, Math.round(c.wind_speed_10m), c.relative_humidity_2m, Math.round(c.surface_pressure), c.is_day === 1);
+            } catch (e) {}
+        }
+
+        function updateWeatherUI(t, code, w, h, p, isDay) {
+            const icons = { 0: 'fa-sun-o', 1: 'fa-sun-o', 2: 'fa-cloud', 3: 'fa-cloud' };
+            const d = document.getElementById('wTemp'); if (d) d.textContent = t + '°';
+            const de = document.getElementById('wDesc'); if (de) de.textContent = { 0: 'Despejado', 1: 'Despejado', 2: 'Nublado', 3: 'Nublado' }[code] || 'Variable';
+            const wi = document.getElementById('wWind'); if (wi) wi.textContent = w;
+            const hu = document.getElementById('wHum'); if (hu) hu.textContent = h;
+            const pr = document.getElementById('wPres'); if (pr) pr.textContent = p;
+            const ic = document.getElementById('wIcon'); if (ic) { ic.className = 'fa ' + (icons[code] || (isDay ? 'fa-sun-o' : 'fa-moon-o')); ic.style.color = isDay ? '#facc15' : '#94a3b8'; }
+        }
+
         function navigateToExplorar() {
-            const sc = {
-                screenInicio: document.getElementById('screenInicio'),
-                screenExplorar: document.getElementById('screenExplorar'),
-                screenFavoritos: document.getElementById('screenFavoritos'),
-                screenPerfil: document.getElementById('screenPerfil')
-            };
-            Object.values(sc).forEach(s => s.classList.remove('active'));
-            sc.screenExplorar.classList.add('active');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screenExplorar').classList.add('active');
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.querySelector('.nav-item[data-screen="screenExplorar"]').classList.add('active');
-            if (mapFull) setTimeout(() => mapFull.invalidateSize(), 250);
+            const nb = document.querySelector('.nav-item[data-screen="screenExplorar"]');
+            if (nb) nb.classList.add('active');
+            if (!mapFull) setTimeout(() => initMap(), 300);
+            else setTimeout(() => mapFull.invalidateSize(), 250);
         }
-
-        let currentLat = null,
-            currentLng = null,
-            currentHeading = 0,
-            currentAccuracy = 20;
-        let userMarker, headingMarker, destinationMarker = null;
-        let activeRoute = null,
-            selectedPoint = null,
-            routeLine = null;
-        let lastWeatherFetch = 0,
-            firstLocation = false,
-            is3DMode = true,
-            mapFull;
-
-        const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-              attr = '&copy; OpenStreetMap &copy; CARTO';
-
-        function createPurpleMarker(iconHtml, size = 34) {
-            return L.divIcon({
-                html: `<div style="background:#a855f7;width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px #c084fc;border:2.5px solid white;font-size:16px;color:white;">${iconHtml}</div>`,
-                iconSize: [size, size],
-                iconAnchor: [size / 2, size / 2],
-                popupAnchor: [0, -size / 2],
-                className: ''
-            });
-        }
-
-        function createUserMarker() {
-            return L.divIcon({
-                html: '<div style="width:22px;height:22px;background:#38bdf8;border-radius:50%;border:3.5px solid white;box-shadow:0 0 20px #0ea5e9,0 0 40px rgba(14,165,233,0.5);"></div>',
-                iconSize: [22, 22],
-                iconAnchor: [11, 11],
-                popupAnchor: [0, -11],
-                className: ''
-            });
-        }
-
-        function createHeadingMarker(heading) {
-            return L.divIcon({
-                html: `<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;transform:rotate(${heading}deg);"><div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:26px solid #38bdf8;filter:drop-shadow(0 0 10px #0ea5e9);"></div></div>`,
-                iconSize: [40, 40],
-                iconAnchor: [20, 20],
-                className: ''
-            });
-        }
-
-        function createDestinationMarker() {
-            return L.divIcon({
-                html: '<div style="width:30px;height:30px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px #10b981;border:3.5px solid white;font-size:15px;color:white;"><i class="fa fa-flag-checkered"></i></div>',
-                iconSize: [30, 30],
-                iconAnchor: [15, 30],
-                popupAnchor: [0, -30],
-                className: ''
-            });
-        }
-
-        const puntosInteres = [
-            { lat: -16.1655, lng: -69.0855, nombre: 'Basílica de Copacabana', icon: '<i class="fa fa-institution"></i>' },
-            { lat: -16.1610, lng: -69.0800, nombre: 'Cerro Calvario', icon: '<i class="fa fa-mountain"></i>' },
-            { lat: -16.1580, lng: -69.0905, nombre: 'Playa de Copacabana', icon: '<i class="fa fa-life-ring"></i>' },
-            { lat: -16.1690, lng: -69.0880, nombre: 'Muelle principal', icon: '<i class="fa fa-ship"></i>' }
-        ];
 
         function initMap() {
-            mapFull = L.map('mapFull', {
-                zoomControl: false,
-                attributionControl: false,
-                pitch: 60,
-                bearing: 0,
-                zoomSnap: 0.5,
-                zoomDelta: 0.5
-            }).setView([-16.1667, -69.0833], 16);
-            
-            L.tileLayer(darkTile, { attribution: attr, maxZoom: 19 }).addTo(mapFull);
+            const div = document.getElementById('mapFull');
+            if (!div) return;
+            if (mapFull) { mapFull.remove(); mapFull = null; }
+
+            mapFull = L.map('mapFull', { zoomControl: false, attributionControl: false, pitch: 60, bearing: 0 }).setView([currentLat, currentLng], 16);
+            mapMode = 'dark';
+            baseTileLayer = L.tileLayer(tileSources.dark, { maxZoom: 19 }).addTo(mapFull);
             L.control.zoom({ position: 'bottomright' }).addTo(mapFull);
-            
-            puntosInteres.forEach(p => {
-                const m = L.marker([p.lat, p.lng], { icon: createPurpleMarker(p.icon) }).addTo(mapFull);
-                m.on('click', () => {
-                    if (!activeRoute) {
-                        selectedPoint = p;
-                        showRoutePanel(p);
-                    }
+
+            // SOLO DATOS DE BASE DE DATOS
+            if (puntosInteres.length > 0) {
+                puntosInteres.forEach(p => {
+                    const icon = L.divIcon({
+                        html: `<div style="background:#a855f7;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px #c084fc;border:2.5px solid white;font-size:16px;color:white;"><i class="fa ${p.icono || 'fa-map-marker'}"></i></div>`,
+                        iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -17], className: ''
+                    });
+                    const m = L.marker([p.latitud, p.longitud], { icon }).addTo(mapFull);
+                    m.on('click', () => {
+                        if (!activeRoute) { selectedPoint = { lat: p.latitud, lng: p.longitud, nombre: p.nombre }; showRoutePanel(selectedPoint); }
+                    });
+                    m.bindPopup(`<b>${p.nombre}</b><br><small>⭐ ${p.rating || 0} - ${p.categoria || ''}</small><br><small>Toca para ruta</small>`);
                 });
-                m.bindPopup(`<b style="font-size:13px;">${p.nombre}</b><br><small style="opacity:0.7;">Toca para trazar ruta</small>`);
-            });
-            
-            userMarker = L.marker([-16.1667, -69.0833], { icon: createUserMarker(), zIndexOffset: 1000 }).addTo(mapFull);
-            headingMarker = L.marker([-16.1667, -69.0833], { icon: createHeadingMarker(0), zIndexOffset: 1001 }).addTo(mapFull);
+            }
+
+            if (restriccionesViales.length > 0) {
+                restriccionesViales.forEach(r => {
+                    L.circle([r.latitud, r.longitud], { radius: r.radio_metros || 50, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.15, weight: 2, dashArray: '5,5' })
+                        .addTo(mapFull).bindPopup(`<b>⚠️ ${r.nombre}</b><br><small>${(r.tipo_restriccion||'').toUpperCase()} - ${r.severidad||''}</small>`);
+                });
+            }
+
+            const uIcon = L.divIcon({ html: '<div style="width:22px;height:22px;background:#38bdf8;border-radius:50%;border:3.5px solid white;box-shadow:0 0 20px #0ea5e9;"></div>', iconSize: [22,22], iconAnchor: [11,11], className: '' });
+            userMarker = L.marker([currentLat, currentLng], { icon: uIcon, zIndexOffset: 1000 }).addTo(mapFull);
+            headingMarker = L.marker([currentLat, currentLng], { icon: createHeadingMarker(0), zIndexOffset: 1001 }).addTo(mapFull);
+            firstLocation = false;
+        }
+
+        function createHeadingMarker(h) {
+            return L.divIcon({ html: `<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;transform:rotate(${h}deg);"><div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:26px solid #38bdf8;"></div></div>`, iconSize: [40,40], iconAnchor: [20,20], className: '' });
         }
 
         function showRoutePanel(p) {
@@ -1302,7 +927,7 @@
             if (currentLat && currentLng) {
                 const d = calcDist(currentLat, currentLng, p.lat, p.lng);
                 document.getElementById('routeDistance').textContent = d.toFixed(2) + ' km';
-                document.getElementById('routeTime').textContent = Math.round((d / 5) * 60) + ' min';
+                document.getElementById('routeTime').textContent = Math.round((d/5)*60) + ' min';
             }
             document.getElementById('routeOverlay').classList.add('active');
             document.getElementById('routePanel').classList.add('active');
@@ -1315,231 +940,94 @@
         };
 
         async function getOSRMRoute(fla, flo, tla, tlo) {
-            const u = `https://router.project-osrm.org/route/v1/foot/${flo},${fla};${tlo},${tla}?overview=full&geometries=geojson&steps=true`;
-            const r = await fetch(u);
-            if (!r.ok) throw new Error('OSRM error');
+            const r = await fetch(`https://router.project-osrm.org/route/v1/foot/${flo},${fla};${tlo},${tla}?overview=full&geometries=geojson&steps=true`);
             const d = await r.json();
-            if (!d.routes || d.routes.length === 0) throw new Error('Sin ruta');
-            return {
-                coords: d.routes[0].geometry.coordinates.map(c => [c[1], c[0]]),
-                distance: d.routes[0].distance / 1000,
-                duration: d.routes[0].duration / 60
-            };
+            return { coords: d.routes[0].geometry.coordinates.map(c => [c[1],c[0]]), distance: d.routes[0].distance/1000, duration: d.routes[0].duration/60 };
         }
 
         window.startRoute = async function() {
-            if (!currentLat || !currentLng || !selectedPoint) return;
-            try {
-                const rd = await getOSRMRoute(currentLat, currentLng, selectedPoint.lat, selectedPoint.lng);
-                if (routeLine) mapFull.removeLayer(routeLine);
-                if (destinationMarker) mapFull.removeLayer(destinationMarker);
-                
-                routeLine = L.polyline(rd.coords, {
-                    color: '#a855f7',
-                    weight: 7,
-                    opacity: 0.9,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                }).addTo(mapFull);
-                
-                destinationMarker = L.marker([selectedPoint.lat, selectedPoint.lng], {
-                    icon: createDestinationMarker(),
-                    zIndexOffset: 999
-                }).addTo(mapFull).bindPopup(`<b>${selectedPoint.nombre}</b><br>Destino`).openPopup();
-                
-                activeRoute = selectedPoint;
-                document.getElementById('routeOverlay').classList.remove('active');
-                document.getElementById('routePanel').classList.remove('active');
-                document.getElementById('routeActiveName').textContent = selectedPoint.nombre;
-                document.getElementById('routeActiveBar').classList.add('active');
-                document.getElementById('legendDestino').style.display = 'flex';
-                
-                const b = L.latLngBounds([[currentLat, currentLng], [selectedPoint.lat, selectedPoint.lng]]);
-                mapFull.fitBounds(b, { padding: [50, 50], maxZoom: 16, animate: true, duration: 1.2 });
-                
-                if (is3DMode) {
-                    setTimeout(() => {
-                        const br = calcBearing(currentLat, currentLng, selectedPoint.lat, selectedPoint.lng);
-                        mapFull.setPitch(65);
-                        mapFull.setBearing(br);
-                    }, 300);
-                }
-            } catch (e) {
-                alert('No se pudo calcular la ruta.');
-            }
+            if (!currentLat || !currentLng || !selectedPoint || !mapFull) return;
+            const rd = await getOSRMRoute(currentLat, currentLng, selectedPoint.lat, selectedPoint.lng);
+            if (routeLine) mapFull.removeLayer(routeLine);
+            if (destinationMarker) mapFull.removeLayer(destinationMarker);
+            routeLine = L.polyline(rd.coords, { color: '#a855f7', weight: 7, opacity: 0.9 }).addTo(mapFull);
+            destinationMarker = L.marker([selectedPoint.lat, selectedPoint.lng], {
+                icon: L.divIcon({ html: '<div style="width:30px;height:30px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px #10b981;border:3.5px solid white;font-size:15px;color:white;"><i class="fa fa-flag-checkered"></i></div>', iconSize: [30,30], iconAnchor: [15,30], className: '' }),
+                zIndexOffset: 999
+            }).addTo(mapFull).bindPopup('<b>' + selectedPoint.nombre + '</b><br>Destino').openPopup();
+            activeRoute = selectedPoint;
+            document.getElementById('routeOverlay').classList.remove('active');
+            document.getElementById('routePanel').classList.remove('active');
+            document.getElementById('routeActiveName').textContent = selectedPoint.nombre;
+            document.getElementById('routeActiveBar').classList.add('active');
+            document.getElementById('legendDestino').style.display = 'flex';
+            const sr = document.getElementById('statRutas');
+            if (sr) sr.textContent = (parseInt(sr.textContent, 10) || 0) + 1;
+            mapFull.fitBounds(L.latLngBounds([[currentLat,currentLng],[selectedPoint.lat,selectedPoint.lng]]), { padding: [50,50], maxZoom: 16 });
         };
 
         window.finishRoute = function() {
+            if (!mapFull) return;
             if (routeLine) { mapFull.removeLayer(routeLine); routeLine = null; }
             if (destinationMarker) { mapFull.removeLayer(destinationMarker); destinationMarker = null; }
-            activeRoute = null;
-            selectedPoint = null;
+            activeRoute = null; selectedPoint = null;
             document.getElementById('routeActiveBar').classList.remove('active');
             document.getElementById('legendDestino').style.display = 'none';
-            if (currentLat) {
-                mapFull.setView([currentLat, currentLng], 16, { animate: true, duration: 1, pitch: is3DMode ? 60 : 0, bearing: 0 });
-            }
+            if (currentLat) mapFull.setView([currentLat, currentLng], 16);
         };
 
         window.toggle3D = function() {
+            if (!mapFull) return;
             is3DMode = !is3DMode;
             const b = document.getElementById('btn3D');
-            if (is3DMode) {
-                b.classList.add('active-ctrl');
-                mapFull.setPitch(60);
+            if (is3DMode) { b.classList.add('active-ctrl'); mapFull.setPitch(60); }
+            else { b.classList.remove('active-ctrl'); mapFull.setPitch(0); }
+        };
+
+        window.toggleSatellite = function() {
+            if (!mapFull) return;
+            mapMode = mapMode === 'dark' ? 'satellite' : 'dark';
+            if (baseTileLayer) mapFull.removeLayer(baseTileLayer);
+            baseTileLayer = L.tileLayer(tileSources[mapMode], { maxZoom: 19 }).addTo(mapFull);
+            baseTileLayer.bringToBack();
+            const btn = document.getElementById('btnSat');
+            const badge = document.getElementById('mapModeBadge');
+            if (mapMode === 'satellite') {
+                btn.classList.add('active-ctrl');
+                btn.innerHTML = '<i class="fa fa-map-o"></i>';
+                badge.style.display = 'flex';
             } else {
-                b.classList.remove('active-ctrl');
-                mapFull.setPitch(0);
-            }
-            if (currentLat) {
-                mapFull.setView([currentLat, currentLng], mapFull.getZoom(), { animate: true });
+                btn.classList.remove('active-ctrl');
+                btn.innerHTML = '<i class="fa fa-globe"></i>';
+                badge.style.display = 'none';
             }
         };
 
         window.centerOnUser = function() {
-            if (currentLat && currentLng) {
-                mapFull.setView([currentLat, currentLng], 17, { animate: true, duration: 0.8, pitch: is3DMode ? 60 : 0, bearing: currentHeading || 0 });
-            }
+            if (!mapFull) { navigateToExplorar(); setTimeout(() => { if (mapFull) mapFull.setView([currentLat, currentLng], 17); }, 500); return; }
+            if (currentLat) mapFull.setView([currentLat, currentLng], 17);
         };
 
-        window.resetNorth = function() {
-            mapFull.setBearing(0);
-            if (currentLat && currentLng) {
-                mapFull.setView([currentLat, currentLng], mapFull.getZoom(), { animate: true, pitch: is3DMode ? 60 : 0, bearing: 0 });
-            }
-        };
+        window.resetNorth = function() { if (mapFull) mapFull.setBearing(0); };
 
         function calcDist(l1, ln1, l2, ln2) {
-            const R = 6371,
-                  dLat = (l2 - l1) * Math.PI / 180,
-                  dLng = (ln2 - ln1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 + Math.cos(l1 * Math.PI / 180) * Math.cos(l2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const R = 6371, dLat = (l2-l1)*Math.PI/180, dLng = (ln2-ln1)*Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(l1*Math.PI/180)*Math.cos(l2*Math.PI/180)*Math.sin(dLng/2)**2;
+            return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function calcBearing(l1, ln1, l2, ln2) {
-            const dLng = (ln2 - ln1) * Math.PI / 180;
-            const y = Math.sin(dLng) * Math.cos(l2 * Math.PI / 180);
-            const x = Math.cos(l1 * Math.PI / 180) * Math.sin(l2 * Math.PI / 180) - Math.sin(l1 * Math.PI / 180) * Math.cos(l2 * Math.PI / 180) * Math.cos(dLng);
-            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-        }
-
-        function updateUserPosition(lat, lng, acc, head) {
-            currentLat = lat;
-            currentLng = lng;
-            currentAccuracy = acc || 20;
-            if (head !== null && head !== undefined) currentHeading = head;
-            if (userMarker) userMarker.setLatLng([lat, lng]);
-            if (headingMarker) {
-                headingMarker.setLatLng([lat, lng]);
-                headingMarker.setIcon(createHeadingMarker(currentHeading));
-            }
-            document.getElementById('gpsText').textContent = `GPS activo ±${Math.round(currentAccuracy)}m`;
-            document.getElementById('gpsCoords').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-            if (!firstLocation) {
-                firstLocation = true;
-                mapFull.setView([lat, lng], 16, { animate: true, pitch: 60, bearing: 0 });
-            }
-            if (activeRoute) {
-                const br = calcBearing(lat, lng, activeRoute.lat, activeRoute.lng);
-                if (is3DMode) {
-                    mapFull.setView([lat, lng], 16, { animate: true, duration: 0.6, pitch: 65, bearing: head || br });
-                }
-            }
-            const now = Date.now();
-            if (now - lastWeatherFetch > 30000) {
-                fetchWeather(lat, lng);
-            }
-        }
-
-        function geoSuccess(pos) {
-            const { latitude, longitude, accuracy, heading } = pos.coords;
-            updateUserPosition(latitude, longitude, accuracy, heading);
-            if (lastWeatherFetch === 0) {
-                fetchWeather(latitude, longitude);
-            }
-        }
-
-        function geoError(err) {
-            document.getElementById('gpsText').textContent = 'GPS no disponible';
-            document.getElementById('gpsCoords').textContent = '--';
-        }
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(geoSuccess, geoError, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
-            navigator.geolocation.watchPosition(geoSuccess, geoError, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000, distanceFilter: 3 });
-        }
-
-        async function fetchWeather(lat, lng) {
-            lastWeatherFetch = Date.now();
-            try {
-                const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure,is_day&timezone=auto`);
-                if (!r.ok) throw new Error('Error');
-                const d = await r.json();
-                const c = d.current;
-                updateWeatherUI(Math.round(c.temperature_2m), c.weather_code, Math.round(c.wind_speed_10m), c.relative_humidity_2m, Math.round(c.surface_pressure), c.is_day === 1);
-            } catch (e) {}
-        }
-
-        function updateWeatherUI(t, code, w, h, p, isDay) {
-            const icons = {
-                0: 'fa-sun-o', 1: 'fa-sun-o', 2: 'fa-cloud', 3: 'fa-cloud',
-                45: 'fa-smog', 48: 'fa-smog', 51: 'fa-tint', 53: 'fa-tint',
-                55: 'fa-tint', 61: 'fa-tint', 63: 'fa-tint', 65: 'fa-tint',
-                71: 'fa-snowflake-o', 73: 'fa-snowflake-o', 75: 'fa-snowflake-o',
-                80: 'fa-tint', 81: 'fa-tint', 82: 'fa-tint',
-                95: 'fa-bolt', 96: 'fa-bolt', 99: 'fa-bolt'
-            };
-            const descs = {
-                0: 'Despejado', 1: 'Mayormente despejado', 2: 'Parcial nublado',
-                3: 'Nublado', 45: 'Niebla', 48: 'Niebla', 51: 'Llovizna',
-                53: 'Llovizna', 55: 'Llovizna', 61: 'Lluvia ligera', 63: 'Lluvia',
-                65: 'Lluvia intensa', 71: 'Nieve ligera', 73: 'Nieve', 75: 'Nieve intensa',
-                80: 'Chubascos', 81: 'Chubascos', 82: 'Chubascos',
-                95: 'Tormenta', 96: 'Tormenta', 99: 'Tormenta'
-            };
-            const icon = icons[code] || (isDay ? 'fa-sun-o' : 'fa-moon-o');
-            const desc = descs[code] || 'Desconocido';
-            document.getElementById('wTemp').textContent = t + '°';
-            document.getElementById('wDesc').textContent = desc;
-            document.getElementById('wWind').textContent = w;
-            document.getElementById('wHum').textContent = h;
-            document.getElementById('wPres').textContent = p;
-            const el = document.getElementById('wIcon');
-            el.className = 'fa ' + icon;
-            el.style.color = isDay ? '#facc15' : '#94a3b8';
-        }
-
-        // Navegación
-        const screens = {
-            screenInicio: document.getElementById('screenInicio'),
-            screenExplorar: document.getElementById('screenExplorar'),
-            screenFavoritos: document.getElementById('screenFavoritos'),
-            screenPerfil: document.getElementById('screenPerfil')
-        };
-        
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', () => {
                 const t = btn.dataset.screen;
-                Object.values(screens).forEach(s => s.classList.remove('active'));
-                if (screens[t]) screens[t].classList.add('active');
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                const ts = document.getElementById(t); if (ts) ts.classList.add('active');
                 document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                if (t === 'screenExplorar' && mapFull) {
-                    setTimeout(() => mapFull.invalidateSize(), 250);
-                }
+                if (t === 'screenExplorar' && mapFull) setTimeout(() => mapFull.invalidateSize(), 250);
             });
         });
 
-        const observer = new MutationObserver(() => {
-            if (document.getElementById('appWrapper').classList.contains('active') && !mapFull) {
-                initMap();
-                setTimeout(() => mapFull.invalidateSize(), 600);
-                observer.disconnect();
-            }
-        });
-        observer.observe(document.getElementById('appWrapper'), { attributes: true, attributeFilter: ['class'] });
-        window.addEventListener('resize', () => { if (mapFull) mapFull.invalidateSize(); });
+        init();
     </script>
 </body>
 </html>
