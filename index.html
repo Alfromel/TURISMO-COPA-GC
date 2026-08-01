@@ -208,54 +208,53 @@
             background: linear-gradient(to top, rgba(0,0,0,0.88), transparent); font-size: 12.5px; font-weight: 600; line-height: 1.3;
         }
 
-        /* ===== EXPLORAR ===== */
-        .explorar-full { display: flex; flex-direction: column; height: calc(100vh - 190px - var(--safe-top)); max-height: 660px; }
-        .explorar-top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; flex-shrink: 0; }
-        .gps-mini {
-            display: flex; align-items: center; justify-content: space-between;
-            background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2);
-            border-radius: var(--radius-sm); padding: 10px 14px; font-size: 11.5px; font-weight: 600;
+        /* ===== EXPLORAR — mapa a pantalla completa ===== */
+        .screen#screenExplorar { padding: 0; margin: 0; }
+        .explorar-full {
+            position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px;
+            height: 100vh; height: 100dvh; z-index: 5;
         }
-        .gps-mini i { color: #a855f7; }
-        .gps-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; display: inline-block; margin-right: 4px; animation: pulseDot 1.6s infinite; }
-        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-        .weather-mini {
-            background: linear-gradient(135deg, rgba(17,28,46,0.85), rgba(10,20,34,0.85));
-            border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
-            border: 1px solid rgba(168,85,247,0.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
-        .weather-mini-left { display: flex; align-items: center; gap: 12px; }
-        .weather-mini-left .fa { font-size: 28px; }
-        .weather-mini-temp { font-size: 23px; font-weight: 800; line-height: 1; }
-        .weather-mini-desc { font-size: 10.5px; opacity: 0.65; margin-top: 2px; }
-        .weather-mini-right { display: flex; gap: 12px; font-size: 10.5px; opacity: 0.7; }
-        .weather-mini-right span { display: flex; align-items: center; gap: 4px; }
+        #mapFull { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-        .map-main {
-            flex: 1; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6); position: relative; min-height: 300px;
+        .explorar-topbar {
+            position: absolute; top: 0; left: 0; right: 0; padding: calc(12px + var(--safe-top)) 16px 40px;
+            background: linear-gradient(to bottom, rgba(6,9,18,0.85) 0%, rgba(6,9,18,0.55) 55%, transparent 100%);
+            z-index: 1000; display: flex; justify-content: space-between; align-items: center; pointer-events: none;
         }
-        #mapFull { height: 100%; width: 100%; }
-        .map-controls { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+        .explorar-topbar * { pointer-events: auto; }
+        .explorar-title { display: flex; flex-direction: column; }
+        .explorar-title h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .gps-pill {
+            display: inline-flex; align-items: center; gap: 6px; background: rgba(10,15,25,0.65);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px; padding: 4px 10px 4px 8px; font-size: 11px; font-weight: 600; margin-top: 6px; width: fit-content;
+        }
+        .gps-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; display: inline-block; animation: pulseDot 1.6s infinite; }
+        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        .map-controls { position: absolute; top: calc(70px + var(--safe-top)); right: 12px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
         .map-ctrl-btn {
-            background: rgba(10,15,25,0.75); border: 1px solid rgba(255,255,255,0.15); color: white;
-            width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 14px;
-            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px); transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background: rgba(10,15,25,0.7); border: 1px solid rgba(255,255,255,0.14); color: white;
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 15px;
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); transition: 0.2s; box-shadow: 0 4px 14px rgba(0,0,0,0.35);
         }
-        .map-ctrl-btn:active { background: rgba(255,255,255,0.2); transform: scale(0.92); }
-        .map-ctrl-btn.active-ctrl { background: rgba(168,85,247,0.65); border-color: rgba(168,85,247,0.8); }
+        .map-ctrl-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.92); }
+        .map-ctrl-btn.active-ctrl { background: rgba(168,85,247,0.7); border-color: rgba(168,85,247,0.85); }
 
         .map-mode-badge {
-            position: absolute; top: 12px; left: 12px; z-index: 1000; background: rgba(10,15,25,0.8);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(56,189,248,0.3);
+            position: absolute; top: calc(70px + var(--safe-top)); left: 12px; z-index: 1000; background: rgba(10,15,25,0.75);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(56,189,248,0.3);
             padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px;
             color: #7dd3fc; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        .map-legend { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 6px; z-index: 1000; flex-wrap: wrap; max-width: calc(100% - 24px); }
+        .map-legend {
+            position: absolute; left: 12px; display: flex; gap: 6px; z-index: 1000; flex-wrap: wrap; max-width: calc(100% - 24px);
+            bottom: calc(100px + var(--safe-bottom));
+        }
         .legend-item {
-            background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.68); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             border-radius: 14px; padding: 5px 10px; font-size: 9.5px; font-weight: 600;
             display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.08);
         }
@@ -379,6 +378,9 @@
         .nav-item.active { color: white; }
         .nav-item i { font-size: 20px; }
         .nav-item:active { transform: scale(0.9); }
+
+        /* Cuando Explorar está activo, la barra inferior flota sobre el mapa */
+        .bottom-nav.on-map { background: rgba(10,15,26,0.75); }
     </style>
 </head>
 <body>
@@ -389,7 +391,7 @@
             <div class="login-header">
                 <div class="logo"><i class="fa fa-map-pin"></i></div>
                 <h2>Bienvenido</h2>
-                <p>Ingresa tus datos para continuar</p>
+                <p>Regístrate para comenzar a explorar</p>
             </div>
             <form class="login-form" id="loginForm" onsubmit="return false;">
                 <div class="form-group">
@@ -414,7 +416,7 @@
                 </div>
                 <div class="mensaje-bd" id="mensajeBD"></div>
                 <button type="submit" class="btn-login" id="btnLogin" onclick="handleLogin()">
-                    <i class="fa fa-sign-in"></i> Ingresar
+                    <i class="fa fa-sign-in"></i> Registrarme y entrar
                 </button>
             </form>
             <div class="login-footer">Copa-Tur · Turismo Copacabana, Bolivia</div>
@@ -478,45 +480,26 @@
         </div>
 
         <div class="screen" id="screenExplorar">
-            <div class="container" style="height:100%;display:flex;flex-direction:column;">
-                <div class="header" style="margin-bottom:14px;">
-                    <div><h1 style="font-size:21px;">Explorar</h1><p style="font-size:13.5px;">Copacabana en tiempo real</p></div>
-                    <div class="header-icons"><i class="fa fa-compass" style="color:#a855f7;"></i></div>
+            <div class="explorar-full">
+                <div id="mapFull"></div>
+                <div class="explorar-topbar">
+                    <div class="explorar-title">
+                        <h1>Explorar</h1>
+                        <span class="gps-pill"><span class="gps-dot" id="gpsDot"></span><span id="gpsText">Buscando GPS...</span></span>
+                    </div>
                 </div>
-                <div class="explorar-full">
-                    <div class="explorar-top">
-                        <div class="gps-mini">
-                            <span><span class="gps-dot" id="gpsDot"></span><span id="gpsText">Buscando GPS...</span></span>
-                            <span style="opacity:0.5;font-size:10px;" id="gpsCoords">--</span>
-                        </div>
-                        <div class="weather-mini">
-                            <div class="weather-mini-left">
-                                <i class="fa fa-sun-o" id="wIcon" style="color:#facc15;"></i>
-                                <div><div class="weather-mini-temp" id="wTemp">--°</div><div class="weather-mini-desc" id="wDesc">Cargando...</div></div>
-                            </div>
-                            <div class="weather-mini-right">
-                                <span><i class="fa fa-flag"></i> <span id="wWind">--</span></span>
-                                <span><i class="fa fa-tint"></i> <span id="wHum">--</span>%</span>
-                                <span><i class="fa fa-compress"></i> <span id="wPres">--</span></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="map-main">
-                        <div id="mapFull"></div>
-                        <div class="map-mode-badge" id="mapModeBadge" style="display:none;"><i class="fa fa-globe"></i> Modo satélite</div>
-                        <div class="map-controls">
-                            <button class="map-ctrl-btn" id="btnSat" onclick="toggleSatellite()" title="Modo satélite"><i class="fa fa-globe"></i></button>
-                            <button class="map-ctrl-btn active-ctrl" id="btn3D" onclick="toggle3D()" title="Vista 3D"><i class="fa fa-cube"></i></button>
-                            <button class="map-ctrl-btn" onclick="centerOnUser()" title="Mi ubicación"><i class="fa fa-crosshairs"></i></button>
-                            <button class="map-ctrl-btn" onclick="resetNorth()" title="Norte"><i class="fa fa-compass"></i></button>
-                        </div>
-                        <div class="map-legend">
-                            <div class="legend-item"><div class="legend-dot purple"></div> Turístico</div>
-                            <div class="legend-item"><div class="legend-dot blue"></div> Tú</div>
-                            <div class="legend-item" id="legendDestino" style="display:none;"><div class="legend-dot green"></div> Destino</div>
-                            <div class="legend-item"><div class="legend-dot red"></div> Restricción</div>
-                        </div>
-                    </div>
+                <div class="map-mode-badge" id="mapModeBadge" style="display:none;"><i class="fa fa-globe"></i> Satélite</div>
+                <div class="map-controls">
+                    <button class="map-ctrl-btn" id="btnSat" onclick="toggleSatellite()" title="Modo satélite"><i class="fa fa-globe"></i></button>
+                    <button class="map-ctrl-btn active-ctrl" id="btn3D" onclick="toggle3D()" title="Vista 3D"><i class="fa fa-cube"></i></button>
+                    <button class="map-ctrl-btn" onclick="centerOnUser()" title="Mi ubicación"><i class="fa fa-crosshairs"></i></button>
+                    <button class="map-ctrl-btn" onclick="resetNorth()" title="Norte"><i class="fa fa-compass"></i></button>
+                </div>
+                <div class="map-legend">
+                    <div class="legend-item"><div class="legend-dot purple"></div> Turístico</div>
+                    <div class="legend-item"><div class="legend-dot blue"></div> Tú</div>
+                    <div class="legend-item" id="legendDestino" style="display:none;"><div class="legend-dot green"></div> Destino</div>
+                    <div class="legend-item"><div class="legend-dot red"></div> Restricción</div>
                 </div>
             </div>
         </div>
@@ -586,11 +569,11 @@
                 </div>
 
                 <button class="btn-logout" onclick="cerrarSesion()"><i class="fa fa-sign-out"></i> Cerrar sesión</button>
-                <div class="app-version">Copa-Tur v1.2.0</div>
+                <div class="app-version">Copa-Tur v1.3.0</div>
             </div>
         </div>
 
-        <div class="bottom-nav">
+        <div class="bottom-nav" id="bottomNav">
             <button class="nav-item active" data-screen="screenInicio"><i class="fa fa-home"></i><span>Inicio</span></button>
             <button class="nav-item" data-screen="screenExplorar"><i class="fa fa-compass"></i><span>Explorar</span></button>
             <button class="nav-item" data-screen="screenFavoritos"><i class="fa fa-heart-o"></i><span>Favoritos</span></button>
@@ -612,9 +595,10 @@
         let currentLat = -16.1667, currentLng = -69.0833, currentHeading = 0, currentAccuracy = 20;
         let userMarker = null, headingMarker = null, destinationMarker = null;
         let activeRoute = null, selectedPoint = null, routeLine = null;
-        let lastWeatherFetch = 0, firstLocation = false, is3DMode = true, mapFull = null;
+        let firstLocation = false, is3DMode = true, mapFull = null;
         let puntosInteres = [], restriccionesViales = [], currentUser = null;
         let baseTileLayer = null, mapMode = 'dark';
+        let navegando = false;
         const tileSources = {
             dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
             satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
@@ -661,7 +645,10 @@
         }
 
         // ============================================
-        // LOGIN - SOLO BASE DE DATOS
+        // LOGIN / REGISTRO — SOLO BASE DE DATOS
+        // Esta pantalla SOLO se usa para el registro inicial.
+        // Una vez registrado, el usuario queda guardado por su ID
+        // exacto y entra directo la próxima vez (sesión persistente).
         // ============================================
         async function handleLogin() {
             const n = document.getElementById('inputNombre').value.trim();
@@ -685,25 +672,26 @@
             btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Verificando en base de datos...';
 
             try {
-                // PRIMERO: Buscar si existe en la tabla usuarios
+                // Buscar si ese teléfono EXACTO ya existe (limit 1, evita traer varios registros)
                 const { data: existentes, error: errorBusqueda } = await db
                     .from('usuarios')
                     .select('*')
-                    .eq('telefono', telefono);
+                    .eq('telefono', telefono)
+                    .limit(1);
 
                 if (errorBusqueda) {
                     mostrarMensaje('Error al verificar: ' + errorBusqueda.message, 'error');
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa fa-sign-in"></i> Ingresar';
+                    btn.innerHTML = '<i class="fa fa-sign-in"></i> Registrarme y entrar';
                     return;
                 }
 
-                if (existentes && existentes.length > 0) {
-                    // USUARIO ENCONTRADO EN BD - Actualizar y entrar
-                    const user = existentes[0];
-                    console.log('✅ Usuario encontrado en BD:', user.nombre);
+                let usuarioFinal = null;
 
-                    const { error: errorUpdate } = await db
+                if (existentes && existentes.length > 0) {
+                    // Ya existe con ese teléfono -> actualizamos SOLO ese registro (por id exacto)
+                    const user = existentes[0];
+                    const { data: actualizado, error: errorUpdate } = await db
                         .from('usuarios')
                         .update({
                             ultimo_acceso: new Date().toISOString(),
@@ -711,19 +699,20 @@
                             pais: pn,
                             pais_codigo: pc
                         })
-                        .eq('id', user.id);
+                        .eq('id', user.id)
+                        .select()
+                        .single();
 
-                    if (errorUpdate) console.warn('Error al actualizar:', errorUpdate.message);
-
-                    mostrarMensaje('✅ Usuario verificado. Bienvenido ' + user.nombre + '!', 'success');
-                    currentUser = user;
-
-                    setTimeout(() => entrarApp(user.nombre, user.pais, user.pais_codigo, user.telefono), 600);
-
+                    if (errorUpdate) {
+                        mostrarMensaje('Error al actualizar: ' + errorUpdate.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa fa-sign-in"></i> Registrarme y entrar';
+                        return;
+                    }
+                    usuarioFinal = actualizado;
+                    mostrarMensaje('✅ Usuario verificado. Bienvenido ' + usuarioFinal.nombre + '!', 'success');
                 } else {
-                    // USUARIO NO EXISTE - Registrar nuevo
-                    console.log('🆕 Registrando nuevo usuario en BD:', n);
-
+                    // Usuario nuevo -> registrar
                     const { data: nuevo, error: errorInsert } = await db
                         .from('usuarios')
                         .insert([{
@@ -737,40 +726,46 @@
                         .single();
 
                     if (errorInsert) {
-                        console.error('Error al insertar:', errorInsert);
                         mostrarMensaje('Error al registrar: ' + errorInsert.message, 'error');
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fa fa-sign-in"></i> Ingresar';
+                        btn.innerHTML = '<i class="fa fa-sign-in"></i> Registrarme y entrar';
                         return;
                     }
-
-                    console.log('✅ Usuario registrado en BD:', nuevo.id);
+                    usuarioFinal = nuevo;
                     mostrarMensaje('✅ Registro exitoso! Bienvenido ' + n, 'success');
-                    currentUser = nuevo;
-
-                    setTimeout(() => entrarApp(n, pn, pc, telefono), 600);
                 }
+
+                currentUser = usuarioFinal;
+                // Guardamos el ID exacto: es la única forma confiable de recordar
+                // SIEMPRE al mismo usuario en la próxima carga de la app.
+                guardarSesion(usuarioFinal);
+                setTimeout(() => entrarApp(usuarioFinal), 600);
 
             } catch (error) {
                 console.error('❌ Error crítico:', error);
                 mostrarMensaje('Error de conexión: ' + error.message, 'error');
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-sign-in"></i> Ingresar';
+                btn.innerHTML = '<i class="fa fa-sign-in"></i> Registrarme y entrar';
             }
         }
 
-        function entrarApp(nombre, pais, paisCodigo, telefono) {
-            localStorage.setItem('userData', JSON.stringify({ nombre, pais, paisCodigo, telefono }));
+        function guardarSesion(user) {
+            localStorage.setItem('userSessionId', String(user.id));
+            localStorage.setItem('userData', JSON.stringify({
+                id: user.id, nombre: user.nombre, pais: user.pais, paisCodigo: user.pais_codigo, telefono: user.telefono
+            }));
+        }
 
-            document.getElementById('userNameDisplay').textContent = nombre;
-            document.getElementById('userCountryDisplay').textContent = pais;
-            document.getElementById('profileName').textContent = nombre;
-            document.getElementById('profilePhone').textContent = telefono;
-            document.getElementById('profileCountry').textContent = pais;
-            document.getElementById('profileCountry2').textContent = pais;
+        function entrarApp(user) {
+            document.getElementById('userNameDisplay').textContent = user.nombre;
+            document.getElementById('userCountryDisplay').textContent = user.pais;
+            document.getElementById('profileName').textContent = user.nombre;
+            document.getElementById('profilePhone').textContent = user.telefono;
+            document.getElementById('profileCountry').textContent = user.pais;
+            document.getElementById('profileCountry2').textContent = user.pais;
 
-            const visitas = (parseInt(localStorage.getItem('visitCount') || '0', 10)) + 1;
-            localStorage.setItem('visitCount', String(visitas));
+            const visitas = (parseInt(localStorage.getItem('visitCount_' + user.id) || '0', 10)) + 1;
+            localStorage.setItem('visitCount_' + user.id, String(visitas));
             const sv = document.getElementById('statVisitas');
             if (sv) sv.textContent = visitas;
 
@@ -781,7 +776,9 @@
         }
 
         window.cerrarSesion = function() {
+            localStorage.removeItem('userSessionId');
             localStorage.removeItem('userData');
+            currentUser = null;
             document.getElementById('appWrapper').classList.remove('active');
             document.getElementById('loginContainer').style.display = 'flex';
             document.getElementById('inputNombre').value = '';
@@ -789,6 +786,41 @@
             document.getElementById('inputPais').value = '';
             updatePrefix();
         };
+
+        // ============================================
+        // SESIÓN AUTOMÁTICA: si ya existe un usuario guardado
+        // (por su ID exacto) entramos directo, sin mostrar el
+        // formulario de registro nunca más.
+        // ============================================
+        async function intentarSesionAutomatica() {
+            const sessionId = localStorage.getItem('userSessionId');
+            if (!sessionId) return false;
+
+            try {
+                const { data: user, error } = await db
+                    .from('usuarios')
+                    .select('*')
+                    .eq('id', sessionId)
+                    .single();
+
+                if (error || !user) {
+                    // El id guardado ya no existe en la BD: limpiar sesión corrupta
+                    localStorage.removeItem('userSessionId');
+                    localStorage.removeItem('userData');
+                    return false;
+                }
+
+                currentUser = user;
+                guardarSesion(user);
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('appWrapper').classList.add('active');
+                entrarApp(user);
+                return true;
+            } catch (e) {
+                console.error('Error en sesión automática:', e.message);
+                return false;
+            }
+        }
 
         // ============================================
         // CARGAR DATOS DESDE BASE DE DATOS
@@ -810,15 +842,16 @@
         // ============================================
         // INICIALIZACIÓN
         // ============================================
-        function init() {
+        async function init() {
             populatePaises();
             updatePrefix();
-
-            // SIEMPRE mostrar login primero
-            document.getElementById('loginContainer').style.display = 'flex';
-            document.getElementById('appWrapper').classList.remove('active');
-
             iniciarGPS();
+
+            const yaLogueado = await intentarSesionAutomatica();
+            if (!yaLogueado) {
+                document.getElementById('loginContainer').style.display = 'flex';
+                document.getElementById('appWrapper').classList.remove('active');
+            }
         }
 
         function iniciarGPS() {
@@ -829,7 +862,6 @@
 
         function geoSuccess(pos) {
             updateUserPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.coords.heading);
-            if (lastWeatherFetch === 0) fetchWeather(pos.coords.latitude, pos.coords.longitude);
         }
         function geoError(err) {
             const el = document.getElementById('gpsText');
@@ -840,34 +872,15 @@
 
         function updateUserPosition(lat, lng, acc, head) {
             currentLat = lat; currentLng = lng; currentAccuracy = acc || 20;
-            if (head !== null && head !== undefined) currentHeading = head;
+            if (head !== null && head !== undefined && !isNaN(head)) currentHeading = head;
             if (mapFull && userMarker) userMarker.setLatLng([lat, lng]);
-            if (mapFull && headingMarker) { headingMarker.setLatLng([lat, lng]); headingMarker.setIcon(createHeadingMarker(currentHeading)); }
+            if (mapFull && headingMarker) {
+                headingMarker.setLatLng([lat, lng]);
+                headingMarker.setIcon(navegando ? createNavArrowIcon(currentHeading) : createHeadingMarker(currentHeading));
+            }
             if (mapFull && !firstLocation) { firstLocation = true; mapFull.setView([lat, lng], 16, { animate: true, pitch: 60 }); }
-            const gt = document.getElementById('gpsText'), gc = document.getElementById('gpsCoords');
-            if (gt) gt.textContent = 'GPS activo ±' + Math.round(currentAccuracy) + 'm';
-            if (gc) gc.textContent = lat.toFixed(4) + ', ' + lng.toFixed(4);
-            if (Date.now() - lastWeatherFetch > 30000) fetchWeather(lat, lng);
-        }
-
-        async function fetchWeather(lat, lng) {
-            lastWeatherFetch = Date.now();
-            try {
-                const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure,is_day&timezone=auto`);
-                if (!r.ok) return;
-                const d = await r.json(), c = d.current;
-                updateWeatherUI(Math.round(c.temperature_2m), c.weather_code, Math.round(c.wind_speed_10m), c.relative_humidity_2m, Math.round(c.surface_pressure), c.is_day === 1);
-            } catch (e) {}
-        }
-
-        function updateWeatherUI(t, code, w, h, p, isDay) {
-            const icons = { 0: 'fa-sun-o', 1: 'fa-sun-o', 2: 'fa-cloud', 3: 'fa-cloud' };
-            const d = document.getElementById('wTemp'); if (d) d.textContent = t + '°';
-            const de = document.getElementById('wDesc'); if (de) de.textContent = { 0: 'Despejado', 1: 'Despejado', 2: 'Nublado', 3: 'Nublado' }[code] || 'Variable';
-            const wi = document.getElementById('wWind'); if (wi) wi.textContent = w;
-            const hu = document.getElementById('wHum'); if (hu) hu.textContent = h;
-            const pr = document.getElementById('wPres'); if (pr) pr.textContent = p;
-            const ic = document.getElementById('wIcon'); if (ic) { ic.className = 'fa ' + (icons[code] || (isDay ? 'fa-sun-o' : 'fa-moon-o')); ic.style.color = isDay ? '#facc15' : '#94a3b8'; }
+            const gt = document.getElementById('gpsText'), gc = document.getElementById('gpsDot');
+            if (gt) gt.textContent = navegando ? 'Navegando ±' + Math.round(currentAccuracy) + 'm' : 'GPS activo ±' + Math.round(currentAccuracy) + 'm';
         }
 
         function navigateToExplorar() {
@@ -876,6 +889,7 @@
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
             const nb = document.querySelector('.nav-item[data-screen="screenExplorar"]');
             if (nb) nb.classList.add('active');
+            document.getElementById('bottomNav').classList.add('on-map');
             if (!mapFull) setTimeout(() => initMap(), 300);
             else setTimeout(() => mapFull.invalidateSize(), 250);
         }
@@ -890,12 +904,12 @@
             baseTileLayer = L.tileLayer(tileSources.dark, { maxZoom: 19 }).addTo(mapFull);
             L.control.zoom({ position: 'bottomright' }).addTo(mapFull);
 
-            // SOLO DATOS DE BASE DE DATOS
+            // SOLO DATOS DE BASE DE DATOS — estilo de burbuja pequeño tipo iPhone/Apple Maps
             if (puntosInteres.length > 0) {
                 puntosInteres.forEach(p => {
                     const icon = L.divIcon({
-                        html: `<div style="background:#a855f7;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px #c084fc;border:2.5px solid white;font-size:16px;color:white;"><i class="fa ${p.icono || 'fa-map-marker'}"></i></div>`,
-                        iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -17], className: ''
+                        html: `<div class="ios-pin"><i class="fa ${p.icono || 'fa-map-marker'}"></i></div>`,
+                        iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -14], className: ''
                     });
                     const m = L.marker([p.latitud, p.longitud], { icon }).addTo(mapFull);
                     m.on('click', () => {
@@ -912,14 +926,53 @@
                 });
             }
 
-            const uIcon = L.divIcon({ html: '<div style="width:22px;height:22px;background:#38bdf8;border-radius:50%;border:3.5px solid white;box-shadow:0 0 20px #0ea5e9;"></div>', iconSize: [22,22], iconAnchor: [11,11], className: '' });
+            const uIcon = L.divIcon({ html: '<div style="width:16px;height:16px;background:#38bdf8;border-radius:50%;border:3px solid white;box-shadow:0 0 14px #0ea5e9;"></div>', iconSize: [16,16], iconAnchor: [8,8], className: '' });
             userMarker = L.marker([currentLat, currentLng], { icon: uIcon, zIndexOffset: 1000 }).addTo(mapFull);
-            headingMarker = L.marker([currentLat, currentLng], { icon: createHeadingMarker(0), zIndexOffset: 1001 }).addTo(mapFull);
+            headingMarker = L.marker([currentLat, currentLng], { icon: navegando ? createNavArrowIcon(0) : createHeadingMarker(0), zIndexOffset: 1001 }).addTo(mapFull);
             firstLocation = false;
+
+            injectPinStyles();
         }
 
+        // Estilo de "burbuja" pequeña, redondeada y con sombra suave — inspirado en Apple Maps
+        function injectPinStyles() {
+            if (document.getElementById('iosPinStyles')) return;
+            const style = document.createElement('style');
+            style.id = 'iosPinStyles';
+            style.textContent = `
+                .ios-pin {
+                    width: 26px; height: 26px; border-radius: 50%;
+                    background: linear-gradient(135deg, #a855f7, #7c3aed);
+                    display: flex; align-items: center; justify-content: center;
+                    color: white; font-size: 11px;
+                    border: 2px solid rgba(255,255,255,0.92);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px rgba(168,85,247,0.25);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Marcador simple (punto) cuando NO se está navegando: solo un pequeño triángulo direccional
         function createHeadingMarker(h) {
-            return L.divIcon({ html: `<div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;transform:rotate(${h}deg);"><div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:26px solid #38bdf8;"></div></div>`, iconSize: [40,40], iconAnchor: [20,20], className: '' });
+            return L.divIcon({
+                html: `<div style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;transform:rotate(${h}deg);">
+                    <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:15px solid #38bdf8;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));"></div>
+                </div>`,
+                iconSize: [26,26], iconAnchor: [13,13], className: ''
+            });
+        }
+
+        // Flecha de navegación bonita y profesional (estilo Google/Apple Maps) — se activa al iniciar ruta
+        function createNavArrowIcon(h) {
+            const svg = `
+                <svg width="46" height="46" viewBox="0 0 46 46" style="transform:rotate(${h}deg);filter:drop-shadow(0 3px 8px rgba(56,189,248,0.6));">
+                    <circle cx="23" cy="23" r="19" fill="rgba(56,189,248,0.18)"/>
+                    <path d="M23 6 L34 33 L23 27 L12 33 Z" fill="#38bdf8" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                </svg>`;
+            return L.divIcon({
+                html: `<div style="width:46px;height:46px;display:flex;align-items:center;justify-content:center;">${svg}</div>`,
+                iconSize: [46,46], iconAnchor: [23,23], className: ''
+            });
         }
 
         function showRoutePanel(p) {
@@ -952,9 +1005,15 @@
             if (destinationMarker) mapFull.removeLayer(destinationMarker);
             routeLine = L.polyline(rd.coords, { color: '#a855f7', weight: 7, opacity: 0.9 }).addTo(mapFull);
             destinationMarker = L.marker([selectedPoint.lat, selectedPoint.lng], {
-                icon: L.divIcon({ html: '<div style="width:30px;height:30px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px #10b981;border:3.5px solid white;font-size:15px;color:white;"><i class="fa fa-flag-checkered"></i></div>', iconSize: [30,30], iconAnchor: [15,30], className: '' }),
+                icon: L.divIcon({ html: '<div style="width:26px;height:26px;background:#10b981;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.92);font-size:11px;color:white;"><i class="fa fa-flag-checkered"></i></div>', iconSize: [26,26], iconAnchor: [13,26], className: '' }),
                 zIndexOffset: 999
             }).addTo(mapFull).bindPopup('<b>' + selectedPoint.nombre + '</b><br>Destino').openPopup();
+
+            // Activar modo navegación: la marca del usuario se convierte en una flecha direccional
+            navegando = true;
+            if (userMarker) { mapFull.removeLayer(userMarker); userMarker = null; }
+            if (headingMarker) headingMarker.setIcon(createNavArrowIcon(currentHeading));
+
             activeRoute = selectedPoint;
             document.getElementById('routeOverlay').classList.remove('active');
             document.getElementById('routePanel').classList.remove('active');
@@ -971,6 +1030,15 @@
             if (routeLine) { mapFull.removeLayer(routeLine); routeLine = null; }
             if (destinationMarker) { mapFull.removeLayer(destinationMarker); destinationMarker = null; }
             activeRoute = null; selectedPoint = null;
+
+            // Volver al marcador de punto normal (no navegación)
+            navegando = false;
+            if (!userMarker) {
+                const uIcon = L.divIcon({ html: '<div style="width:16px;height:16px;background:#38bdf8;border-radius:50%;border:3px solid white;box-shadow:0 0 14px #0ea5e9;"></div>', iconSize: [16,16], iconAnchor: [8,8], className: '' });
+                userMarker = L.marker([currentLat, currentLng], { icon: uIcon, zIndexOffset: 1000 }).addTo(mapFull);
+            }
+            if (headingMarker) headingMarker.setIcon(createHeadingMarker(currentHeading));
+
             document.getElementById('routeActiveBar').classList.remove('active');
             document.getElementById('legendDestino').style.display = 'none';
             if (currentLat) mapFull.setView([currentLat, currentLng], 16);
@@ -1023,7 +1091,13 @@
                 const ts = document.getElementById(t); if (ts) ts.classList.add('active');
                 document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                if (t === 'screenExplorar' && mapFull) setTimeout(() => mapFull.invalidateSize(), 250);
+                if (t === 'screenExplorar') {
+                    document.getElementById('bottomNav').classList.add('on-map');
+                    if (!mapFull) setTimeout(() => initMap(), 300);
+                    else setTimeout(() => mapFull.invalidateSize(), 250);
+                } else {
+                    document.getElementById('bottomNav').classList.remove('on-map');
+                }
             });
         });
 
